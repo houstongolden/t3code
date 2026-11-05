@@ -1,3 +1,4 @@
+import { claudeBrief } from "@you/brief";
 import * as DocumentText from "../../provider/DocumentText.ts";
 import {
   compactDynamicToolOutput,
@@ -1771,6 +1772,7 @@ export function makeClaudeQueryOptions(input: {
   // Flag settings, because a user's settings.json env beats the process env in Claude Code.
   readonly toolSearchOverride?: "true";
 }): ClaudeAgentSdkQueryOptions {
+  const youBriefText = claudeBrief(input.cwd)?.text;
   const compiledSelection = compileClaudeModelSelection(input.modelSelection);
   const {
     // claudeLaunchArgDirectories reads every --add-dir into additionalDirectories.
@@ -1878,6 +1880,8 @@ export function makeClaudeQueryOptions(input: {
       type: "preset" as const,
       preset: "claude_code" as const,
       append: [
+        // You: memory-first brief (packages/brief), first so the agent knows who it works for.
+        ...(youBriefText === undefined ? [] : [youBriefText]),
         buildRuntimeInstructions({ harness: "Claude Code" }) +
           (input.mcpServers === undefined
             ? ""

@@ -1,0 +1,16 @@
+{
+  "_note": "EXAMPLE fixture. Invented data used only when no ~/.you profile or public cache exists.",
+  "username": "example",
+  "identity": {
+    "name": "Example Person",
+    "location": "Somewhere",
+    "tagline": "Example founder who runs several AI agents across several projects."
+  },
+  "agent_directives": {
+    "communication_style": "Example: direct, short sentences.",
+    "negative_prompts": ["Example: no emoji"],
+    "current_goal": "Example: ship the first version."
+  },
+  "now": { "focus": ["Example focus item"] },
+  "projects": [{ "name": "Example App", "description": "Example project.", "status": "example" }]
+}

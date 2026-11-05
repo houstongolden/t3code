@@ -18845,3 +18845,40 @@ describe("ClaudeAdapterV2 query message stream", () => {
     }),
   );
 });
+
+describe("You brief injection", () => {
+  it("prepends the you.md brief to the Claude system prompt when enabled", () => {
+    const dir = NodeFS.mkdtempSync(
+      NodePath.join(process.env.TMPDIR ?? "/tmp", "you-brief-claude-"),
+    );
+    const profilePath = NodePath.join(dir, "you.json");
+    NodeFS.writeFileSync(
+      profilePath,
+      JSON.stringify({
+        identity: { name: "Brief Tester" },
+        projects: [{ name: "workspace", description: "test repo" }],
+      }),
+    );
+    const prev = { on: process.env.YOU_BRIEF, path: process.env.YOU_BRIEF_PROFILE };
+    process.env.YOU_BRIEF = "on";
+    process.env.YOU_BRIEF_PROFILE = profilePath;
+    try {
+      const options = ClaudeAdapterV2.makeClaudeQueryOptions({
+        modelSelection: CLAUDE_TEST_MODEL_SELECTION,
+        nativeThreadId: "brief-thread",
+        resume: false,
+        cwd: "/workspace",
+        settings: DEFAULT_CLAUDE_SETTINGS,
+      });
+      const prompt = options.systemPrompt as { append: string };
+      assert.ok(prompt.append.startsWith("# You brief (you.md)"));
+      assert.ok(prompt.append.includes("Brief Tester"));
+      assert.ok(prompt.append.includes("## Active project\nworkspace"));
+    } finally {
+      if (prev.on === undefined) delete process.env.YOU_BRIEF;
+      else process.env.YOU_BRIEF = prev.on;
+      if (prev.path === undefined) delete process.env.YOU_BRIEF_PROFILE;
+      else process.env.YOU_BRIEF_PROFILE = prev.path;
+    }
+  });
+});

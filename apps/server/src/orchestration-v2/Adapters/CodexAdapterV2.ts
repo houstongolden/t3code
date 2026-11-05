@@ -1,3 +1,4 @@
+import { codexBrief } from "@you/brief";
 import { pipe } from "effect/Function";
 import * as DocumentText from "../../provider/DocumentText.ts";
 import { revertCodexThread } from "../../provider/CodexThreadRevert.ts";
@@ -803,10 +804,15 @@ export const buildCodexTurnStartParams = Effect.fn("CodexAdapterV2.buildCodexTur
             },
           )
         : undefined;
+    // You: memory-first brief, one entry under Codex's per-value cap (packages/brief).
+    const youBrief = codexBrief(input.runtimePolicy.cwd);
+    const youContext = youBrief
+      ? { you_brief: { kind: "application" as const, value: youBrief.text } }
+      : undefined;
     const additionalContext =
-      t3Context === undefined && Object.keys(appContext).length === 0
+      t3Context === undefined && youContext === undefined && Object.keys(appContext).length === 0
         ? undefined
-        : { ...t3Context, ...appContext };
+        : { ...youContext, ...t3Context, ...appContext };
     return yield* decodeCodexTurnStartParamsWithCollaborationMode({
       threadId: input.nativeThreadId,
       input: input.codexInput,
