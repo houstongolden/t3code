@@ -7,27 +7,27 @@
       content="width=device-width, initial-scale=1.0, viewport-fit=cover, interactive-widget=resizes-content"
     />
     <meta name="theme-color" content="#000000" />
-    <link rel="icon" href="/favicon.ico" sizes="48x48" />
+    <link rel="icon" href="/you/favicon.svg" type="image/svg+xml" />
     <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
     <link rel="manifest" href="/manifest.webmanifest" />
     <script>
       (() => {
-        const LIGHT_BACKGROUND = "#ffffff";
-        const DARK_BACKGROUND = "#000000";
+        const LIGHT_BACKGROUND = "#FAFAF7";
+        const DARK_BACKGROUND = "#131312";
         const CUSTOM_THEMES_STORAGE_KEY = "t3code:themes:v1";
         const THEME_FOLLOW_SYSTEM_STORAGE_KEY = "t3code:theme-follow-system";
         const THEME_APPEARANCE_MODE_STORAGE_KEY = "t3code:theme-appearance-mode";
         const THEME_HALVES_STORAGE_KEY = "t3code:theme-halves:v1";
         const SPLASH_COLORS = {
           light: {
-            background: "#ffffff",
-            foreground: "#262626",
-            accent: "#4f46e5",
+            background: "#FAFAF7",
+            foreground: "#1A1A18",
+            accent: "#E5482F",
           },
           dark: {
-            background: "#000000",
-            foreground: "#f5f5f5",
-            accent: "#818cf8",
+            background: "#131312",
+            foreground: "#EDEDE6",
+            accent: "#E5482F",
           },
         };
         // These are the runtime defaults used to complete a custom palette
@@ -674,7 +674,7 @@
     <div id="root">
       <div id="boot-shell">
         <div id="boot-shell-card" aria-label="You splash screen">
-          <img id="boot-shell-logo" src="/apple-touch-icon.png" alt="You" />
+          <img id="boot-shell-logo" src="/you/favicon.svg" alt="You" />
         </div>
       </div>
     </div>
