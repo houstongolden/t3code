@@ -1,3 +1,4 @@
+import { withExampleYouBrief } from "@t3tools/provider-testing/youBrief";
 import * as NodeServices from "@effect/platform-node/NodeServices";
 import { assert, describe, it } from "@effect/vitest";
 import type { InteractionUpdate } from "@cursor/sdk";
@@ -49,6 +50,7 @@ describe("CursorAdapterV2", () => {
     "projects Cursor tasks and unfinished tools: $status, late model $lateModel",
     ({ status, model, lateModel }) =>
       Effect.gen(function* () {
+        yield* withExampleYouBrief;
         const fileSystem = yield* FileSystem.FileSystem;
         const workspace = yield* fileSystem.makeTempDirectoryScoped({
           prefix: "cursor-v2-lifecycle-",
@@ -85,6 +87,8 @@ describe("CursorAdapterV2", () => {
                 close: Effect.void,
                 send: (input) =>
                   Effect.gen(function* () {
+                    assert.include(JSON.stringify(input), "Example Adapter Owner");
+                    assert.include(JSON.stringify(input), "reference-only");
                     sentWithMcpOverride = Object.hasOwn(input.options ?? {}, "mcpServers");
                     // Recorded tasks stream partial args before start, then end without completion; live runs cannot force this.
                     const taskToolCall = {

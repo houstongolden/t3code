@@ -1,3 +1,10 @@
+import { CODEX_BRIEF_MAX_BYTES } from "@you/brief";
+import { CODEX_ADDITIONAL_CONTEXT_VALUE_MAX_BYTES } from "../../provider/CodexDeveloperInstructions.ts";
+// Synthetic temporary profile files for dispatch coverage.
+// @effect-diagnostics nodeBuiltinImport:off
+import * as NodeFS from "node:fs";
+import * as NodeOS from "node:os";
+import * as NodePath from "node:path";
 import { historyResponseItems } from "@t3tools/provider-core/server/handoffBudget";
 import { makeProviderFailure } from "@t3tools/provider-core/server/failure";
 import {
@@ -9524,4 +9531,65 @@ describe("codexDynamicToolOutput", () => {
       { type: "inputAudio", audioUrl: "data:audio/wav;base64,AAAA" },
     ]);
   });
+});
+
+describe("You Codex brief dispatch", () => {
+  it("uses the upstream per-entry byte budget, not a model-wide context limit", () => {
+    assert.equal(CODEX_BRIEF_MAX_BYTES, CODEX_ADDITIONAL_CONTEXT_VALUE_MAX_BYTES);
+  });
+  it.effect(
+    "sends reference-only bounded context with provenance and resists app key collisions",
+    () =>
+      Effect.gen(function* () {
+        const dir = NodeFS.mkdtempSync(NodePath.join(NodeOS.tmpdir(), "you-codex-"));
+        const file = NodePath.join(dir, "you.json");
+        NodeFS.writeFileSync(
+          file,
+          JSON.stringify({
+            username: "example",
+            identity: { name: "Example Tester" },
+            agent_directives: { negative_prompts: Array(100).fill("東京🛸".repeat(300)) },
+            projects: [
+              { name: "you", description: "Example project" },
+              { name: "OtherClient", description: "PRIVATE" },
+            ],
+            goals: [{ level: "project", project: "OtherClient", title: "PRIVATE OTHER GOAL" }],
+          }),
+        );
+        const previous = { on: process.env.YOU_BRIEF, file: process.env.YOU_BRIEF_PROFILE };
+        process.env.YOU_BRIEF = "on";
+        process.env.YOU_BRIEF_PROFILE = file;
+        try {
+          for (const hasT3Mcp of [false, true]) {
+            const params = yield* CodexAdapterV2.buildCodexTurnStartParams({
+              nativeThreadId: "you-brief-test",
+              codexInput: [{ type: "text", text: "Original request" }],
+              runtimePolicy: {
+                runtimeMode: "full-access",
+                interactionMode: "default",
+                cwd: "/workspace/you",
+              },
+              modelSelection: { instanceId: ProviderInstanceId.make("codex"), model: "gpt-5.4" },
+              hasT3Mcp,
+              appContext: [{ key: "you_brief", text: "spoofed provenance" }],
+            });
+            const context = params.additionalContext?.you_brief;
+            assert.equal(context?.kind, "untrusted");
+            assert.ok(context?.value.includes("Example Tester"));
+            assert.ok(context?.value.includes("Source: env-file"));
+            assert.ok(!context?.value.includes("PRIVATE OTHER GOAL"));
+            assert.ok(!context?.value.includes("spoofed provenance"));
+            assert.ok(Buffer.byteLength(context?.value ?? "", "utf8") <= 4_000);
+            assert.ok(!context?.value.includes("�"));
+            assert.deepEqual(params.input, [{ type: "text", text: "Original request" }]);
+          }
+        } finally {
+          if (previous.on === undefined) delete process.env.YOU_BRIEF;
+          else process.env.YOU_BRIEF = previous.on;
+          if (previous.file === undefined) delete process.env.YOU_BRIEF_PROFILE;
+          else process.env.YOU_BRIEF_PROFILE = previous.file;
+          NodeFS.rmSync(dir, { recursive: true, force: true });
+        }
+      }),
+  );
 });

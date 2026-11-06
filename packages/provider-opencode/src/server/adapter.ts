@@ -1,3 +1,4 @@
+import { withYouBrief } from "@you/brief/prompt";
 import type {
   Event as OpenCodeEvent,
   Message as OpenCodeMessage,
@@ -2867,7 +2868,7 @@ export const makeOpenCodeAdapterV2 = Effect.fn("makeOpenCodeAdapterV2")(function
           turnInput: ProviderAdapter.ProviderAdapterV2TurnInput,
         ) {
           const text = (yield* providerMessageTextWithAttachmentPaths({
-            text: turnInput.message.text,
+            text: withYouBrief(turnInput.message.text, turnInput.runtimePolicy.cwd, "OpenCode"),
             attachments: turnInput.message.attachments,
             resolveAttachmentPath: host.resolveAttachmentPath,
             resolveExtractedTextPath: host.resolveExtractedTextPath,

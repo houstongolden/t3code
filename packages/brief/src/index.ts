@@ -1,5 +1,4 @@
 // @effect-diagnostics nodeBuiltinImport:off
-import * as NodeFS from "node:fs";
 
 import { buildBrief, CLAUDE_BRIEF_MAX_BYTES, CODEX_BRIEF_MAX_BYTES } from "./build.ts";
 import { loadSources, type SourceOptions } from "./sources.ts";
@@ -16,19 +15,9 @@ export interface DispatchBriefInput extends SourceOptions {
   readonly maxBytes: number;
 }
 
-const memo = new Map<string, { stamp: string; result: BriefResult }>();
-
-const stampOf = (path: string) => {
-  try {
-    return String(NodeFS.statSync(path).mtimeMs);
-  } catch {
-    return "none";
-  }
-};
-
 /**
  * Brief for one provider dispatch. Returns undefined when disabled with YOU_BRIEF=off.
- * Cached per (cwd, harness, budget) and invalidated when the profile file changes.
+ * Fresh bounded reads each dispatch: profile and skill changes take effect immediately.
  */
 export function getDispatchBrief(input: DispatchBriefInput): BriefResult | undefined {
   const env = input.env ?? process.env;
@@ -37,10 +26,8 @@ export function getDispatchBrief(input: DispatchBriefInput): BriefResult | undef
   if (env.VITEST !== undefined && env.YOU_BRIEF !== "on") return undefined;
   try {
     const sources = loadSources(input);
-    const key = `${input.cwd ?? ""}|${input.harness}|${input.maxBytes}|${sources.sourcePath}`;
-    const stamp = stampOf(sources.sourcePath);
-    const hit = memo.get(key);
-    if (hit && hit.stamp === stamp) return hit.result;
+    // Fixture data is for explicit previews/tests, never silently sent as a real user.
+    if (sources.source === "fixture" && env.YOU_BRIEF !== "example") return undefined;
     const result = buildBrief(
       {
         profile: sources.profile,
@@ -51,7 +38,6 @@ export function getDispatchBrief(input: DispatchBriefInput): BriefResult | undef
       },
       input.maxBytes,
     );
-    memo.set(key, { stamp, result });
     return result;
   } catch {
     // A broken brief must never block a dispatch.
@@ -64,3 +50,6 @@ export const codexBrief = (cwd: string | null | undefined, opts: SourceOptions =
 
 export const claudeBrief = (cwd: string | null | undefined, opts: SourceOptions = {}) =>
   getDispatchBrief({ ...opts, cwd, harness: "Claude Code", maxBytes: CLAUDE_BRIEF_MAX_BYTES });
+
+export { normalizeProfile } from "./validate.ts";
+export { redactText } from "./redact.ts";

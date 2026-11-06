@@ -807,12 +807,12 @@ export const buildCodexTurnStartParams = Effect.fn("CodexAdapterV2.buildCodexTur
     // You: memory-first brief, one entry under Codex's per-value cap (packages/brief).
     const youBrief = codexBrief(input.runtimePolicy.cwd);
     const youContext = youBrief
-      ? { you_brief: { kind: "application" as const, value: youBrief.text } }
+      ? { you_brief: { kind: "untrusted" as const, value: youBrief.text } }
       : undefined;
     const additionalContext =
       t3Context === undefined && youContext === undefined && Object.keys(appContext).length === 0
         ? undefined
-        : { ...youContext, ...t3Context, ...appContext };
+        : { ...t3Context, ...appContext, ...youContext };
     return yield* decodeCodexTurnStartParamsWithCollaborationMode({
       threadId: input.nativeThreadId,
       input: input.codexInput,

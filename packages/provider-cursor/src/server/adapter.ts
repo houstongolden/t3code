@@ -1,3 +1,4 @@
+import { withYouBrief } from "@you/brief/prompt";
 import type {
   AgentMessage,
   AgentOptions,
@@ -2285,7 +2286,11 @@ export const makeCursorAdapterV2 = Effect.fn("makeCursorAdapterV2")(function* (
           hasDeviceTools: boolean,
           delivered: { readonly orchestration: boolean; readonly device: boolean },
         ) {
-          const rawText = turnInput.message.text;
+          const rawText = withYouBrief(
+            turnInput.message.text,
+            turnInput.runtimePolicy.cwd,
+            "Cursor",
+          );
           if (rawText.trim() === "/compress" && turnInput.message.attachments.length === 0) {
             return "/compress";
           }

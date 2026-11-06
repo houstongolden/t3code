@@ -54,6 +54,7 @@
     "@t3tools/contracts": "workspace:*",
     "@t3tools/provider-core": "workspace:*",
     "@t3tools/shared": "workspace:*",
+    "@you/brief": "workspace:*",
     "effect": "catalog:",
     "yaml": "catalog:"
   },

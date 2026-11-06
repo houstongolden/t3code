@@ -1,3 +1,4 @@
+import { withYouBrief } from "@you/brief/prompt";
 // @effect-diagnostics nodeBuiltinImport:off
 
 import {
@@ -7719,7 +7720,10 @@ export const makeAcpAdapterV2 = Effect.fn("makeAcpAdapterV2")(function* (
                     ),
                   );
           const messageText = yield* providerMessageTextWithAttachmentPaths({
-            text: userText,
+            text:
+              driver === "grok"
+                ? withYouBrief(userText, turnInput.runtimePolicy.cwd, "Grok")
+                : userText,
             attachments: turnInput.message.attachments,
             resolveAttachmentPath: host.resolveAttachmentPath,
             resolveExtractedTextPath: host.resolveExtractedTextPath,

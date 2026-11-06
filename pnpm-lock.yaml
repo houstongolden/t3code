@@ -1612,6 +1612,9 @@ importers:
       '@t3tools/shared':
         specifier: workspace:*
         version: link:../shared
+      '@you/brief':
+        specifier: workspace:*
+        version: link:../brief
       diff:
         specifier: 8.0.3
         version: 8.0.3
@@ -1717,6 +1720,9 @@ importers:
       '@t3tools/shared':
         specifier: workspace:*
         version: link:../shared
+      '@you/brief':
+        specifier: workspace:*
+        version: link:../brief
       effect:
         specifier: 4.1.2
         version: 4.1.2
@@ -1899,6 +1905,9 @@ importers:
       '@t3tools/shared':
         specifier: workspace:*
         version: link:../shared
+      '@you/brief':
+        specifier: workspace:*
+        version: link:../brief
       effect:
         specifier: 4.1.2
         version: 4.1.2
@@ -1930,6 +1939,9 @@ importers:
       '@t3tools/shared':
         specifier: workspace:*
         version: link:../shared
+      '@you/brief':
+        specifier: workspace:*
+        version: link:../brief
       effect:
         specifier: 4.1.2
         version: 4.1.2

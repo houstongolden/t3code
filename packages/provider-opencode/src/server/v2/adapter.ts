@@ -1,3 +1,4 @@
+import { withYouBrief } from "@you/brief/prompt";
 import * as NodeURL from "node:url";
 
 import {
@@ -3048,7 +3049,7 @@ export const make = Effect.fn("OpenCode2Adapter.make")(function* (instanceId: Pr
       turnInput: ProviderAdapter.ProviderAdapterV2TurnInput,
     ) {
       return (yield* providerMessageTextWithAttachmentPaths({
-        text: turnInput.message.text,
+        text: withYouBrief(turnInput.message.text, turnInput.runtimePolicy.cwd, "OpenCode2"),
         attachments: turnInput.message.attachments,
         resolveAttachmentPath: host.resolveAttachmentPath,
         resolveExtractedTextPath: host.resolveExtractedTextPath,

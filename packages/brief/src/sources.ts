@@ -5,6 +5,7 @@ import * as NodeOS from "node:os";
 import * as NodePath from "node:path";
 import * as NodeURL from "node:url";
 
+import { normalizeProfile } from "./validate.ts";
 import type { BriefSources, SkillRef, YouProfile } from "./types.ts";
 
 export const FIXTURE_PATH = NodePath.join(
@@ -20,7 +21,8 @@ export interface SourceOptions {
 
 const readJson = (path: string): YouProfile | undefined => {
   try {
-    return JSON.parse(NodeFS.readFileSync(path, "utf8")) as YouProfile;
+    if (NodeFS.statSync(path).size > 2_000_000) return undefined;
+    return normalizeProfile(JSON.parse(NodeFS.readFileSync(path, "utf8")));
   } catch {
     return undefined;
   }
@@ -36,6 +38,7 @@ export function resolveProfile(opts: SourceOptions = {}): Omit<BriefSources, "sk
   const candidates: Array<[BriefSources["source"], string | undefined]> = [
     ["env-file", env.YOU_BRIEF_PROFILE],
     ["local-you", NodePath.join(home, ".you", "you.json")],
+    ["cli-cache", NodePath.join(home, ".you", "cache", "cli-you.json")],
     ["public-cache", NodePath.join(home, ".you", "cache", "public-you.json")],
   ];
   for (const [source, path] of candidates) {
@@ -65,6 +68,7 @@ export function listSkills(opts: SourceOptions = {}): SkillRef[] {
   const out: SkillRef[] = [];
   const seen = new Set<string>();
   for (const root of [
+    NodePath.join(home, ".agent-shared", "claude-skills"),
     NodePath.join(home, ".agent-shared", "skills"),
     NodePath.join(home, ".you", "skills"),
   ]) {
@@ -74,15 +78,30 @@ export function listSkills(opts: SourceOptions = {}): SkillRef[] {
     } catch {
       continue;
     }
-    for (const entry of entries.sort()) {
+    for (const entry of entries.sort().slice(0, 500)) {
       const file = NodePath.join(root, entry, "SKILL.md");
       try {
-        if (!NodeFS.statSync(file).isFile()) continue;
-        const fm = frontmatter(NodeFS.readFileSync(file, "utf8").slice(0, 4096));
+        if (!NodeFS.statSync(file).isFile() || NodeFS.statSync(file).size > 100_000) continue;
+        const fd = NodeFS.openSync(file, "r");
+        const header = Buffer.alloc(4096);
+        let bytes: number;
+        try {
+          bytes = NodeFS.readSync(fd, header, 0, header.length, 0);
+        } finally {
+          NodeFS.closeSync(fd);
+        }
+        const fm = frontmatter(header.subarray(0, bytes).toString("utf8"));
         const name = fm.name ?? entry;
         if (seen.has(name)) continue;
         seen.add(name);
-        out.push({ name, description: fm.description ?? "" });
+        out.push({
+          name,
+          description: fm.description ?? "",
+          provenance:
+            root === NodePath.join(home, ".you", "skills")
+              ? "you-skill-metadata"
+              : "shared-skill-metadata",
+        });
       } catch {
         continue;
       }
@@ -102,10 +121,12 @@ export async function fetchPublicProfile(
 ): Promise<string> {
   const res = await fetch(`https://you.md/${encodeURIComponent(username)}/you.json`);
   if (!res.ok) throw new Error(`you.md returned ${res.status}`);
-  const json = (await res.json()) as Record<string, unknown>;
-  delete json._profile; // avatar / ASCII portrait payload, not useful to agents
+  const json = normalizeProfile(await res.json());
+  if (!json || json.username !== username) throw new Error("Unexpected public profile");
+  // Do not retain arbitrary profile body fields.
+  // // avatar / ASCII portrait payload, not useful to agents
   const path = NodePath.join(opts.home ?? NodeOS.homedir(), ".you", "cache", "public-you.json");
-  NodeFS.mkdirSync(NodePath.dirname(path), { recursive: true });
-  NodeFS.writeFileSync(path, JSON.stringify(json, null, 2));
+  NodeFS.mkdirSync(NodePath.dirname(path), { recursive: true, mode: 0o700 });
+  NodeFS.writeFileSync(path, JSON.stringify(json, null, 2), { mode: 0o600 });
   return path;
 }

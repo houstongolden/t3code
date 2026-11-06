@@ -1,3 +1,4 @@
+import { withExampleYouBrief } from "@t3tools/provider-testing/youBrief";
 import { assert, describe, it } from "@effect/vitest";
 import * as NodeServices from "@effect/platform-node/NodeServices";
 import {
@@ -550,6 +551,24 @@ const startTurn = Effect.fnUntraced(function* (
 });
 
 describe("PiAdapterV2", () => {
+  it.effect("sends the You reference brief on a real Pi prompt dispatch", () =>
+    Effect.gen(function* () {
+      yield* withExampleYouBrief;
+      const fake = yield* makeFakePi;
+      const { runtime } = yield* openRuntime(fake);
+      const providerThread = yield* runtime.ensureThread({
+        threadId: THREAD_ID,
+        modelSelection: modelSelection("default"),
+        runtimePolicy,
+      });
+      yield* startTurn(runtime, providerThread);
+      const prompt = yield* fake.takeRequest("prompt");
+      assert.include(String(prompt["message"]), "Example Adapter Owner");
+      assert.include(String(prompt["message"]), "reference-only");
+      assert.include(String(prompt["message"]), "Hello pi");
+    }).pipe(Effect.scoped, Effect.provide(layerTest)),
+  );
+
   it.effect("keeps native image bytes and the saved path in the prompt", () =>
     Effect.gen(function* () {
       const host = yield* ProviderHost.ProviderHost;

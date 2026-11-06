@@ -29,7 +29,12 @@ const profile: YouProfile = {
   },
   now: { focus: ["focus one", "focus two"] },
   projects: [
-    { name: "You.md", description: "identity layer", status: "active", paths: ["youmd"] },
+    {
+      name: "You.md",
+      description: "identity layer",
+      status: "active",
+      paths: ["/work/youmd", "/w/youmd"],
+    },
     { name: "BAMF.ai", description: "post generator", status: "beta" },
   ],
   goals: [
@@ -125,7 +130,7 @@ describe("sources", () => {
     );
     expect(resolveProfile({ home, env: {} }).source).toBe("local-you");
     expect(listSkills({ home })).toEqual([
-      { name: "ship-it", description: "Ship You.md releases" },
+      { name: "ship-it", description: "Ship You.md releases", provenance: "shared-skill-metadata" },
     ]);
     const r = getDispatchBrief({
       home,

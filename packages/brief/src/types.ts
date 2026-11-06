@@ -40,11 +40,12 @@ export interface YouGoal {
 }
 
 export interface SkillRef {
+  readonly provenance?: "shared-skill-metadata" | "you-skill-metadata";
   readonly name: string;
   readonly description: string;
 }
 
-export type BriefSourceKind = "env-file" | "local-you" | "public-cache" | "fixture";
+export type BriefSourceKind = "env-file" | "local-you" | "public-cache" | "cli-cache" | "fixture";
 
 export interface BriefSources {
   readonly profile: YouProfile;
@@ -68,4 +69,9 @@ export interface BriefResult {
   readonly truncated: ReadonlyArray<string>;
   readonly dropped: ReadonlyArray<string>;
   readonly activeProject?: string;
+  readonly provenance: {
+    readonly source: BriefSourceKind | "provided";
+    readonly trust: "reference-only";
+    readonly scope: "personal" | "project";
+  };
 }

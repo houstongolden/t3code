@@ -1,3 +1,4 @@
+import { withExampleYouBrief } from "@t3tools/provider-testing/youBrief";
 // @effect-diagnostics-next-line nodeBuiltinImport:off - Exercise HTTP authentication with the real SDK.
 import * as NodeHttp from "node:http";
 import * as ChildProcess from "effect/process/ChildProcess";
@@ -286,12 +287,17 @@ describe("OpenCodeAdapterV2", () => {
     },
   ])("reports readable and sanitized session and turn failures: $expected", (sample) =>
     Effect.gen(function* () {
+      yield* withExampleYouBrief;
       const nativeEvents = asyncEventStream();
       const harness = yield* makeOpenCodeRuntimeHarness("provider-error", "root", {
         event: { subscribe: async () => ({ stream: nativeEvents.stream }) },
         session: {
           create: async () => ({ data: { id: "root", time: { created: 1, updated: 1 } } }),
-          promptAsync: async () => ({ data: true }),
+          promptAsync: async (payload: unknown) => {
+            assert.include(JSON.stringify(payload), "Example Adapter Owner");
+            assert.include(JSON.stringify(payload), "reference-only");
+            return { data: true };
+          },
           abort: async () => ({ data: true }),
           children: async () => ({ data: [] }),
         },

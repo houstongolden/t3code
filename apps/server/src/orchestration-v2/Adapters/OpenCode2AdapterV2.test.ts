@@ -1,3 +1,4 @@
+import { withExampleYouBrief } from "@t3tools/provider-testing/youBrief";
 import * as NodeURL from "node:url";
 import { toolOutputImages } from "@t3tools/shared/toolOutput";
 import * as NodeCrypto from "@effect/platform-node/NodeCrypto";
@@ -425,16 +426,25 @@ const history = {
 it.layer(McpProviderSessions.layer)("OpenCode2 adapter", (it) => {
   it.effect("switches the session's model and variant before a turn that changed them", () =>
     Effect.gen(function* () {
-      const { runtime, thread } = yield* resumed([
-        out("session.switchModel", {
-          sessionID: SESSION,
-          model: { providerID: "openrouter", id: "deepseek/deepseek-v4-flash", variant: "high" },
-        }),
-        reply("session.switchModel", null),
-        out("session.prompt", { sessionID: SESSION, text: "<any>" }),
-        promptAccepted,
-        event("session.execution.succeeded", { sessionID: SESSION }),
-      ]);
+      yield* withExampleYouBrief;
+      const { runtime, thread } = yield* resumed(
+        [
+          out("session.switchModel", {
+            sessionID: SESSION,
+            model: { providerID: "openrouter", id: "deepseek/deepseek-v4-flash", variant: "high" },
+          }),
+          reply("session.switchModel", null),
+          out("session.prompt", { sessionID: SESSION, text: "<any>" }),
+          promptAccepted,
+          event("session.execution.succeeded", { sessionID: SESSION }),
+        ],
+        {
+          onPrompt: (input) => {
+            assert.include(JSON.stringify(input), "Example Adapter Owner");
+            assert.include(JSON.stringify(input), "reference-only");
+          },
+        },
+      );
       assert.deepEqual(thread.nativeMetadata?.modelSelection, {
         ...bigPickle,
         options: [{ id: "variant", value: "default" }],

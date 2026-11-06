@@ -6,6 +6,10 @@
     ".": {
       "types": "./src/index.ts",
       "import": "./src/index.ts"
+    },
+    "./prompt": {
+      "types": "./src/prompt.ts",
+      "import": "./src/prompt.ts"
     }
   },
   "scripts": {

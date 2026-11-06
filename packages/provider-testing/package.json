@@ -22,6 +22,10 @@
     "./TestProviderHost": {
       "types": "./src/TestProviderHost.ts",
       "import": "./src/TestProviderHost.ts"
+    },
+    "./youBrief": {
+      "types": "./src/youBrief.ts",
+      "import": "./src/youBrief.ts"
     }
   },
   "scripts": {

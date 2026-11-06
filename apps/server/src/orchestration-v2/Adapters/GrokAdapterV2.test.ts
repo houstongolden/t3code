@@ -1,3 +1,4 @@
+import { withExampleYouBrief } from "@t3tools/provider-testing/youBrief";
 import * as NodeCrypto from "@effect/platform-node/NodeCrypto";
 import * as NodeServices from "@effect/platform-node/NodeServices";
 import {
@@ -380,6 +381,7 @@ describe("Grok native questions", () => {
 
   it.live("keeps x.ai multi-select questions live and returns all selected answers", () =>
     Effect.gen(function* () {
+      yield* withExampleYouBrief;
       const fs = yield* FileSystem.FileSystem;
       const path = yield* Path.Path;
       const childProcessSpawner = yield* ChildProcessSpawner.ChildProcessSpawner;
@@ -493,14 +495,24 @@ describe("Grok native questions", () => {
         environment: {},
         hostPlatform: "darwin",
         selfInvocation: yield* resolveSelfInvocation(),
-        makeRuntime: makeAcpReplayRuntime({
-          transcript,
-          statusPath,
-          scriptPath,
-          childProcessSpawner,
-          fileSystem: fs,
-          initializeMeta: GROK_ACP_INITIALIZE_META,
-        }),
+        makeRuntime: (runtimeInput) =>
+          makeAcpReplayRuntime({
+            transcript,
+            statusPath,
+            scriptPath,
+            childProcessSpawner,
+            fileSystem: fs,
+            initializeMeta: GROK_ACP_INITIALIZE_META,
+          })(runtimeInput).pipe(
+            Effect.map((native) => ({
+              ...native,
+              prompt: (payload, options) => {
+                assert.include(JSON.stringify(payload.prompt), "Example Adapter Owner");
+                assert.include(JSON.stringify(payload.prompt), "reference-only");
+                return native.prompt(payload, options);
+              },
+            })),
+          ),
       });
       const policy = ProviderAdapter.ProviderAdapterV2RuntimePolicy.make({
         runtimeMode: "approval-required",

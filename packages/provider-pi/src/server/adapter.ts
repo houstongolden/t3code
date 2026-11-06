@@ -1,3 +1,4 @@
+import { withYouBrief } from "@you/brief/prompt";
 import * as HostProcess from "@t3tools/shared/HostProcess";
 import { AgentScope } from "@t3tools/shared/AgentScope";
 import { getModelSelectionStringOptionValue } from "@t3tools/shared/model";
@@ -2440,7 +2441,7 @@ export const makePiAdapterV2 = Effect.fn("makePiAdapterV2")(function* (
       ) {
         const images: Array<{ type: "image"; data: string; mimeType: string }> = [];
         const message = yield* providerMessageTextWithAttachmentPaths({
-          text,
+          text: withYouBrief(text, cwd, "Pi"),
           attachments,
           resolveAttachmentPath: host.resolveAttachmentPath,
           resolveExtractedTextPath: host.resolveExtractedTextPath,
