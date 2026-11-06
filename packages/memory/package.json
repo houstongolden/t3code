@@ -1,0 +1,22 @@
+{
+  "name": "@you/memory",
+  "private": true,
+  "type": "module",
+  "exports": {
+    ".": {
+      "types": "./src/sweep.ts",
+      "import": "./src/sweep.ts"
+    }
+  },
+  "scripts": {
+    "test": "vp test run --config ../../vite.config.ts --dir .",
+    "typecheck": "effect-tsgo tsrs --noEmit",
+    "sweep": "node src/cli.ts"
+  },
+  "dependencies": {
+    "@you/brief": "workspace:*"
+  },
+  "devDependencies": {
+    "@types/node": "catalog:"
+  }
+}
