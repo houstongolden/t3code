@@ -103,7 +103,7 @@ export function parseManifest(value: unknown): SweepManifest {
 }
 
 /** Output must not enter any git repository (including worktrees), even through a symlink. */
-function ensureOutsideGit(path: string): void {
+export function ensureOutsideGit(path: string): void {
   let current = NodePath.resolve(path);
   while (!NodeFS.existsSync(current)) current = NodePath.dirname(current);
   current = NodeFS.realpathSync(current);

@@ -1,3 +1,92 @@
+# You build notes — M2 (2026-11-06, PST)
+
+Working tree `/workspace/you`; existing `you/m0-brief` branch on `houstongolden/t3code`. Box-only coding. No main,
+PR, deployment, package publication, new repository or Mac/iCloud changes. Unrelated `.repos/alchemy-effect`
+fixture/submodule deletions remain untouched and excluded.
+
+## Implemented bounded increment
+
+- Explicit local accept/reject/correct/latest-decision undo. Exact proposal destination scope, optimistic revision,
+  explicit reviewed confirmation, scoped-key conflicts, correction target and duplicate acceptance guards.
+- Append-only logical, hash-chained `review.json` with actor/time/proposal/scope/redacted content/complete evidence,
+  exclusive lock, atomic fsynced mode-0600 replacement outside git. Undo appends; correction preserves provenance.
+  Hashes detect local corruption; they are not signatures, encryption or tamper-proof identity claims.
+- Accepted materialized references enter the **real shared per-dispatch brief** as quoted data, never directives.
+  Project scope uses exact profile `memoryScope`/name after the existing cwd match; personal scope crosses projects
+  intentionally. Existing Claude/Codex/Cursor/Pi/Grok-ACP/OpenCode adapters pick up this shared builder; no invented
+  adapters. Codex remains untrusted, collision-resistant and capped at 4000 UTF-8 bytes per value.
+- Supported installed-CLI subprocess `you mcp`: initialize/list/get_agent_brief JSON, 15s timeout, 4MB ceiling,
+  UTF-8-safe decoding, suppressed stderr/raw errors, malformed-message guards. Existing CLI auth is consumed in
+  place; no credentials/configs are read, extracted, copied or transferred. Explicit refresh only, never GET/dispatch.
+- Allowlisted private normalization: actual observed `generatedAt` and `user.{summary,authenticated}`; unknown brain,
+  directives, portfolio, next moves and memory bodies dropped. Local private cache stores only normalized redacted
+  reference and reported-auth/source/generated/refresh metadata; 30-minute freshness, future-skew checks and failure
+  invalidation. Project reference requires an exact refresh-cwd binding. Non-null `project.{scopeId,summary}` is only
+  a defensive synthetic extension, not a verified upstream response contract; live observed project was null.
+- Owner-authenticated real-data-flow inspector in Settings → About → You memory. GET/POST `/api/you-memory` require
+  existing browser-cookie auth + settings:write (not bearer/DPoP/read-only). Same-origin/dev-origin, expiring session-
+  bound HMAC CSRF, 32KB form cap, checked review confirmation and ledger revision guards. Escaped script-free HTML,
+  self-only framing/form CSP, no-store/no-referrer, tracing disabled and no private payload logging/analytics/bundles.
+  Actual source/auth/freshness/scope/budget/proposals/accepted references/audit; not a live dispatch receipt.
+- CLI review command and detailed contracts in `docs/YOU-MEMORY.md`. Existing v5 alien shell/vermilion/warm gray
+  preserved; no Sandbox/station work or icon substitution. No real private proposal was accepted by the executor.
+
+## Verification (actual runs)
+
+- Broad selected regression: **69 files / 1464 tests passed** (brief, memory, server HTTP/new review route, server
+  adapter tests, Pi/Cursor/OpenCode/Grok/ACP package sources and dev proxy). Not the full repo-wide test command.
+- Final focused rerun after latest changes: **6 files / 46 tests passed**: brief 27, memory 17, owner HTTP 2.
+- End-to-end synthetic test: normalized export import → accept through authenticated HTTP form → actual
+  `buildCodexTurnStartParams` → untrusted bounded context + original request preserved → other-project exclusion →
+  explicit undo → reference removed from next dispatch. No live/paid provider call.
+- Private tests exercise synthetic MCP subprocess initialize/list/call, split Unicode, malformed non-object output,
+  auth loss, allowlisting, cache permissions, stale/future cache exclusion, exact cwd, repository output refusal.
+- Full repo typecheck passed (42 tasks). Changed-file lint/format passed; normal commit hooks run format/lint/knip.
+- Full `pnpm build`: web/server/marketing succeed; desktop fails only on the known missing `pkg-config` and
+  libsecret development headers (`libsecret-1-dev`). No full app/system installs attempted. Final standalone server
+  bundle rebuilt successfully after last inspector changes.
+- HTTP smoke: running loopback app `/` 200; unauthenticated `/api/you-memory` **401 private, no-store**. No auth
+  bypass/browser manipulation performed. Browser/visual QA and real private CLI execution on box remain unrun.
+
+## Auth, runnable demo and limitations
+
+GitHub authenticated as houstongolden. Box has no installed/authenticated You CLI; no claim of private box auth.
+Existing Mac CLI auth remains on Mac, untouched this increment. Hosted MCP input schema inspected read-only;
+no private connector calls, data transfer or new credentials. Eventual installed runtime can run `refresh-private`
+with its existing supported CLI login. No user key/npm login is needed for this bounded build.
+
+Screenshot-ready local app: `http://127.0.0.1:4377/settings/about` (normal app browser auth first), inspector
+`http://127.0.0.1:4377/api/you-memory`. Parent must dispatch desktop for visual/authenticated browser QA.
+Demo inputs/state outside git: `/workspace/agent-tools/you-m2-demo`; explicitly labeled **SYNTHETIC DEMO**, two
+imported proposals (one personal, one project), **none accepted**. This exercises actual importer/review flow,
+not a disconnected mock or private owner data. Local app starts with that isolated example profile/state/cache:
+
+```sh
+export PATH=/workspace/.tools/pn/bin:/workspace/.tools/node-v26.12.1-linux-x64/bin:$PATH
+YOU_BRIEF_PROFILE=/workspace/agent-tools/you-m2-demo/you.json \
+YOU_MEMORY_DIR=/workspace/agent-tools/you-m2-demo/memory \
+YOU_PRIVATE_BRIEF_PATH=/workspace/agent-tools/you-m2-demo/private.json \
+node apps/server/dist/bin.mjs serve /workspace/you --host 127.0.0.1 --port 4377 \
+  --base-dir /workspace/agent-tools/you-m2-runtime --no-browser --log-level none >/dev/null 2>&1
+```
+
+Output is intentionally suppressed so bootstrap pairing credentials never appear in tool/chat logs. Stop the
+existing demo process before reusing its port. No authenticated browser/visual verification has been claimed.
+Inspector declares Inter/Geist Mono with system fallbacks; browser typography/layout review is pending.
+
+Remaining: LIFO-only reversal; no conflict merge UI beyond explicit correction key/ID; first 100 proposals/last 20
+audit events shown; regex redaction is defense in depth, not perfect secret detection. Primary-local-runtime UI,
+not multi-environment selection; no real non-null private project schema verification, vendor-native session parsers,
+auto-sync, hosted write-back or live-provider dispatch receipts. Private summary remains reference data and must
+never authorize actions. Desktop packaging awaits system headers. Browser QA report needed from parent.
+
+Licenses unchanged: upstream t3code MIT retained with attribution in `NOTICE-YOU.md`; cloudroom-core was checked
+as Apache-2.0 in prior increment, not vendored. Any future reuse must retain LICENSE/NOTICE and mark modifications.
+
+---
+
+## Historical M1 notes (superseded by M2 above where noted)
+
 # You build notes — M1 (2026-11-06, PST)
 
 Working tree: `/workspace/you`, box only. Branch: `you/m0-brief` on `houstongolden/t3code`. No main changes, PR,

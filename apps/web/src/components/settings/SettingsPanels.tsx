@@ -2042,6 +2042,19 @@ export function AboutSettingsPanel() {
         <MobileAppSettingsRow />
       </SettingsSection>
 
+      <SettingsSection id="you-memory" title="You memory">
+        <p className="text-muted-foreground text-sm">
+          Owner-only local brief, sources and explicit memory review. No automatic acceptance.
+        </p>
+        <iframe
+          title="You memory review and brief sources"
+          src="/api/you-memory"
+          sandbox="allow-same-origin allow-forms"
+          className="h-[760px] w-full border-0"
+          referrerPolicy="no-referrer"
+        />
+      </SettingsSection>
+
       <SettingsSection id="legal" title="Legal">
         <SettingsRow
           {...searchableSetting("privacy-policy")}

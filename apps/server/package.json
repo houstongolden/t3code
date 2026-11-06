@@ -60,6 +60,7 @@
     "@t3tools/source-control-github": "workspace:*",
     "@t3tools/source-control-gitlab": "workspace:*",
     "@you/brief": "workspace:*",
+    "@you/memory": "workspace:*",
     "character-entities": "2.0.2",
     "diff": "8.0.3",
     "effect": "catalog:",

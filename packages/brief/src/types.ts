@@ -1,3 +1,5 @@
+import type { PrivateBriefState } from "./privateBrief.ts";
+import type { ReviewedReference } from "./reviewLedger.ts";
 /** Subset of the public you-md/v1 schema (you.md/<username>/you.json) that the brief reads. */
 export interface YouProfile {
   readonly username?: string;
@@ -21,6 +23,7 @@ export interface YouProfile {
 }
 
 export interface YouProject {
+  readonly memoryScope?: string;
   readonly name: string;
   readonly description?: string;
   readonly status?: string;
@@ -55,6 +58,8 @@ export interface BriefSources {
 }
 
 export interface BriefInput {
+  readonly privateBrief?: PrivateBriefState;
+  readonly reviewedReferences?: ReadonlyArray<ReviewedReference>;
   readonly profile: YouProfile;
   readonly cwd?: string | null | undefined;
   readonly harness?: string;
@@ -63,6 +68,8 @@ export interface BriefInput {
 }
 
 export interface BriefResult {
+  readonly privateStatus: PrivateBriefState["status"];
+  readonly reviewedMemoryCount: number;
   readonly text: string;
   readonly bytes: number;
   readonly included: ReadonlyArray<string>;

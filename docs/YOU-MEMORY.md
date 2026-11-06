@@ -44,7 +44,7 @@ Codex's upstream `CodexDeveloperInstructions.ts` defines 4,000 bytes per additio
 1,000 tokens counted as UTF-8 bytes / 4. This is not 4 KiB (4,096), not a 4,000-byte limit on the whole context map,
 and not a tokenizer/model-window guarantee. Tests assert byte-budget parity with that upstream constant and use
 multibyte text. UTF-8 truncation never splits code points. Priority: identity → preferences → active project → goals
-→ relevant skills → current focus. Included/truncated/dropped sections are available in preview metadata.
+→ owner-reviewed references → relevant skills → current focus. The opt-in fresh private CLI reference is budgeted after active project context. Included/truncated/dropped sections are available in preview metadata.
 
 ### Supported CLI integration (no credential extraction)
 
@@ -60,7 +60,7 @@ A schema-allowlisted identity cache is written mode 0600, and the temporary expo
 export, **not** a private-memory `get_agent_brief` integration. If unavailable, install the CLI and use supported
 `you login`, then retry; public cache/fixtures keep development unblocked.
 
-The HTML inspector is a static local preview of the real source snapshot and budget, not a last-sent receipt or an
+The `preview-ui` HTML inspector is a static local preview of the real source snapshot and budget, not a last-sent receipt or an
 in-app live-sync dashboard. It has no script/network access. File creation refuses repository locations. Brand uses
 the locked v5 alien-head mark, vermilion and warm gray; installed fonts have system fallbacks.
 
@@ -125,11 +125,89 @@ node packages/memory/src/cli.ts inspect /tmp/you-memory-state --show-content
   A stale crash lock must be inspected and removed manually; no unsafe lock stealing.
 - State must be outside git (including worktrees/symlinked paths). The read path validates trust/scope/content again.
   Import limits: 64 sources, 5 MB per file, 64 KB per record, 10,000 records per source/run, 20 MB state.
-- Inspect is metadata-only unless `--show-content` is explicit. No accept/promote/write-back API exists yet.
+- Inspect is metadata-only unless `--show-content` is explicit. Imported quotes remain proposals; M2 adds explicit local review below, never autonomous promotion.
 
-## Next boundary
+## M2: explicit local review and dispatched reference context
 
-Build review/acceptance with explicit destination scope and owner approval; then selected vendor export adapters and
-private MCP brief normalization with a stable allowlisted schema. Keep private data and credentials out of source
-control. Add an authenticated in-app inspector only with an explicit server/user boundary; do not expose raw brain
-contents on a new unauthenticated HTTP endpoint.
+The importer does not accept anything. An owner must inspect each quote, edit its reference content/key if needed,
+and confirm the unchanged personal/project scope. `reviewProposal` (`@you/memory/review`) supports `accept`, `reject`,
+`correct`, and latest-active-decision `undo`. A conflicting scoped key requires `correct` with the exact active target ID;
+rejection must be explicitly undone before acceptance. Stale revisions fail, rather than overwriting another decision.
+Undo is deliberately LIFO; arbitrary historical reversal is not implemented. Correction preserves both original and
+replacement provenance. No private proposal has been accepted by the build executor.
+
+`review.json` lives beside `state.json` outside git, mode 0600, with an exclusive writer lock and atomic fsynced replacement.
+Its append-only logical event chain records UUID, actor, wall time, scope, proposal, redacted reference, source/session/event/
+line/time/body-hash evidence, target, previous hash and current hash. This is an inspectable local corruption detector,
+not a signature, identity authority, encrypted store or tamper-proof audit. Undo appends an event; it does not erase evidence.
+
+A decision JSON has `action`, `expectedRevision` (initially `genesis`, then the last event hash), `proposalId`, `scope`,
+`key` (identifier), `content` (1–4000 UTF-8 bytes for accept/correct), `target` (empty except correct/undo), `reviewed:true`.
+Keep decision files outside git. Example synthetic decision:
+
+```json
+{
+  "action": "accept",
+  "expectedRevision": "genesis",
+  "proposalId": "EXAMPLE_PROPOSAL_ID",
+  "scope": { "kind": "project", "projectId": "example-app" },
+  "key": "example-fact",
+  "content": "Example reference only.",
+  "target": "",
+  "reviewed": true
+}
+```
+
+```sh
+node packages/memory/src/cli.ts review /private/local-state /private/explicit-decision.json
+```
+
+Normal adapter dispatch reads the materialized references on every call. Personal references intentionally cross projects.
+Project IDs must equal the matched profile project's exact `memoryScope` (or exact `name` if omitted); no fuzzy scope matching
+or scope widening. Reviewed references are quoted data in a separate section, never `agent_directives`. IDs connect brief
+lines to the evidence/audit; count metadata describes eligible references, not a promise every line fits the provider budget.
+Codex still marks the whole You entry `untrusted` and caps each value at **4000 UTF-8 bytes**.
+
+## M2: supported private CLI/MCP boundary
+
+```sh
+node packages/brief/src/cli.ts refresh-private /absolute/project/cwd
+```
+
+Only this explicit refresh (or its authenticated UI button) spawns `you mcp` with the installed CLI's existing auth in place.
+It sends MCP `initialize`, `notifications/initialized`, `tools/list`, then `get_agent_brief` with
+`{format:"json",includeMemories:true}`. These tool arguments were checked against the live MCP schema. No credential/config
+file is read, copied, transferred or logged. GET/dispatch do not refresh or launch login. Missing CLI/auth is a status, not a
+reason to search local files. On the box the CLI remains unavailable; Mac authentication has not been transferred.
+
+Transport: 15-second deadline, 4 MB aggregate output ceiling, suppressed stderr, bounded line parsing, UTF-8 stream decoding,
+malformed/non-object messages ignored, child termination. Normalize only the observed `generatedAt`,
+`user.{summary,authenticated}` fields. Unknown memory bodies, portfolio graph, next moves, paths and directives are dropped.
+`project:null` is the live observed shape. Optional `project.{scopeId,summary}` plus exact `environment.cwd` is a defensive
+local extension tested synthetically, **not** a verified upstream non-null project contract; unknown shapes are ignored.
+Skill selection remains the existing local metadata-only flow, not private skill-body import.
+
+Cache: `~/.you/cache/private-brief.json` (override `YOU_PRIVATE_BRIEF_PATH`), outside git, mode 0600. It stores only allowlisted,
+redacted reference text and metadata, never the raw response. Auth is **reported by the cached CLI response**, not a live auth
+check or authorization grant. Both upstream generated time and local refresh time must be ≤30 minutes old, with bounded future
+skew. Stale/invalid/failed-auth caches contribute no private reference. Refresh failure invalidates old content and writes only
+sanitized attempt-status metadata. Project reference is bound to the exact refresh cwd; personal reference is intentionally global.
+No automatic sync or write-back to the hosted brain exists.
+
+## M2: authenticated in-app inspector
+
+Settings → About → You memory embeds `/api/you-memory`, a server-rendered same-origin form view backed by the actual brief
+builder, proposals and review ledger. Requires the existing authenticated **browser cookie** session with `settings:write`;
+bearer/DPoP/background sessions and read-only sessions cannot inspect or mutate this owner-local state. This is the primary local
+runtime's inspector, not a remote multi-environment selector or last-sent/live-provider receipt.
+
+POST requires same-origin/dev-origin, session-bound expiring HMAC CSRF, 32 KB body limit and explicit checked review confirmation.
+Revision checks and immutable destination scope are enforced by the writer too. The owner can accept/reject/correct/undo and
+explicitly refresh the CLI. All responses are private/no-store, escaped HTML, script-free CSP with self-only form/framing,
+no-referrer, no body logging/analytics; route tracing is disabled. The iframe permits forms and same-origin but no scripts.
+Private data is loaded server-side only after authentication, never compiled into web assets. The preview shows actual source,
+reported auth, freshness, exact project match, byte budget, eligible reviewed-reference count and audit/proposal state.
+
+Tests use synthetic exports, subprocesses and auth-service fixtures. One end-to-end test imports → accepts through authenticated
+HTTP → exercises the actual Codex parameter builder → verifies untrusted bounded context and project isolation → undoes and
+verifies its removal. This is dispatch-construction verification, not a paid/live Codex call. Browser visual QA is still required.

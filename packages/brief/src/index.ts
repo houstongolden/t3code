@@ -1,3 +1,5 @@
+import { loadPrivateBrief } from "./privateBrief.ts";
+import { loadReviewedReferences } from "./reviewLedger.ts";
 // @effect-diagnostics nodeBuiltinImport:off
 
 import { buildBrief, CLAUDE_BRIEF_MAX_BYTES, CODEX_BRIEF_MAX_BYTES } from "./build.ts";
@@ -28,9 +30,17 @@ export function getDispatchBrief(input: DispatchBriefInput): BriefResult | undef
     const sources = loadSources(input);
     // Fixture data is for explicit previews/tests, never silently sent as a real user.
     if (sources.source === "fixture" && env.YOU_BRIEF !== "example") return undefined;
+    let reviewedReferences: ReturnType<typeof loadReviewedReferences> = [];
+    try {
+      reviewedReferences = loadReviewedReferences(input);
+    } catch {
+      /* Corrupt review state never blocks identity dispatch. Inspector reports it. */
+    }
     const result = buildBrief(
       {
         profile: sources.profile,
+        reviewedReferences,
+        privateBrief: loadPrivateBrief(input.cwd, input),
         cwd: input.cwd,
         harness: input.harness,
         skills: sources.skills,

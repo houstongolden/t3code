@@ -27,6 +27,7 @@ export function normalizeProfile(value: unknown): YouProfile | undefined {
         return [
           {
             name: text(p.name),
+            memoryScope: text(p.memoryScope),
             description: text(p.description),
             status: text(p.status),
             northStar: text(p.northStar),

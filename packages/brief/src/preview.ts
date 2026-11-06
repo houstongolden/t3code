@@ -2,6 +2,7 @@
 import * as NodeFS from "node:fs";
 import * as NodePath from "node:path";
 import * as NodeURL from "node:url";
+import { getDispatchBrief } from "./index.ts";
 import { buildBrief, CODEX_BRIEF_MAX_BYTES } from "./build.ts";
 import { loadSources, type SourceOptions } from "./sources.ts";
 
@@ -14,16 +15,18 @@ const escape = (value: string) =>
 /** Local, static, script-free preview. Actual source snapshot, NOT a last-dispatch receipt or live sync claim. */
 export function renderBriefPreview(cwd: string, opts: SourceOptions = {}): string {
   const sources = loadSources(opts);
-  const b = buildBrief(
-    {
-      profile: sources.profile,
-      cwd,
-      harness: "Codex preview",
-      source: sources.source,
-      skills: sources.skills,
-    },
-    CODEX_BRIEF_MAX_BYTES,
-  );
+  const b =
+    getDispatchBrief({ ...opts, cwd, harness: "Codex preview", maxBytes: CODEX_BRIEF_MAX_BYTES }) ??
+    buildBrief(
+      {
+        profile: sources.profile,
+        cwd,
+        harness: "Codex preview",
+        source: sources.source,
+        skills: sources.skills,
+      },
+      CODEX_BRIEF_MAX_BYTES,
+    );
   const env = opts.env ?? process.env;
   const disabled =
     env.YOU_BRIEF === "off" ||
@@ -42,6 +45,8 @@ export function renderBriefPreview(cwd: string, opts: SourceOptions = {}): strin
     ["Scope", b.activeProject ?? "Personal; no matching project"],
     ["Entry budget", `${b.bytes} / ${CODEX_BRIEF_MAX_BYTES} UTF-8 bytes (Codex)`],
     ["Trust", b.provenance.trust],
+    ["Private CLI", b.privateStatus],
+    ["Reviewed references eligible", String(b.reviewedMemoryCount)],
     ["Included", b.included.join(", ") || "none"],
     ["Truncated", b.truncated.join(", ") || "none"],
     ["Dropped", b.dropped.join(", ") || "none"],

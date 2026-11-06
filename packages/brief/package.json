@@ -10,6 +10,14 @@
     "./prompt": {
       "types": "./src/prompt.ts",
       "import": "./src/prompt.ts"
+    },
+    "./review": {
+      "types": "./src/reviewLedger.ts",
+      "import": "./src/reviewLedger.ts"
+    },
+    "./private": {
+      "types": "./src/privateBrief.ts",
+      "import": "./src/privateBrief.ts"
     }
   },
   "scripts": {

@@ -900,6 +900,9 @@ importers:
       '@you/brief':
         specifier: workspace:*
         version: link:../../packages/brief
+      '@you/memory':
+        specifier: workspace:*
+        version: link:../../packages/memory
       character-entities:
         specifier: 2.0.2
         version: 2.0.2

@@ -1,3 +1,5 @@
+import { getDispatchBrief } from "./index.ts";
+import { refreshPrivateBrief } from "./privateBrief.ts";
 import { writeBriefPreview } from "./preview.ts";
 import { refreshCliProfile } from "./cliProfile.ts";
 // @effect-diagnostics nodeBuiltinImport:off globalConsole:off
@@ -6,7 +8,9 @@ import { buildBrief, CLAUDE_BRIEF_MAX_BYTES, CODEX_BRIEF_MAX_BYTES } from "./bui
 import { fetchPublicProfile, loadSources } from "./sources.ts";
 
 const [cmd = "print", ...rest] = process.argv.slice(2);
-if (cmd === "preview-ui") {
+if (cmd === "refresh-private") {
+  console.log(`Private CLI refresh: ${await refreshPrivateBrief(rest[0] ?? process.cwd())}`);
+} else if (cmd === "preview-ui") {
   const file = rest[0];
   if (!file) throw new Error("Usage: preview-ui OUTPUT.html [cwd]");
   writeBriefPreview(file, rest[1] ?? process.cwd());
@@ -21,10 +25,12 @@ if (cmd === "preview-ui") {
   const cwd = rest.find((a) => !a.startsWith("--")) ?? process.cwd();
   const max = rest.includes("--claude") ? CLAUDE_BRIEF_MAX_BYTES : CODEX_BRIEF_MAX_BYTES;
   const s = loadSources();
-  const r = buildBrief(
-    { profile: s.profile, cwd, harness: "cli", skills: s.skills, source: s.source },
-    max,
-  );
+  const r =
+    getDispatchBrief({ cwd, harness: "cli", maxBytes: max }) ??
+    buildBrief(
+      { profile: s.profile, cwd, harness: "cli", skills: s.skills, source: s.source },
+      max,
+    );
   console.log(r.text);
   console.error(
     `\n[source=${s.source} bytes=${r.bytes}/${max} project=${r.activeProject ?? "-"} included=${r.included.join(",")} truncated=${r.truncated.join(",") || "-"} dropped=${r.dropped.join(",") || "-"}]`,

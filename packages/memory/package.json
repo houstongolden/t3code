@@ -6,6 +6,10 @@
     ".": {
       "types": "./src/sweep.ts",
       "import": "./src/sweep.ts"
+    },
+    "./review": {
+      "types": "./src/review.ts",
+      "import": "./src/review.ts"
     }
   },
   "scripts": {
