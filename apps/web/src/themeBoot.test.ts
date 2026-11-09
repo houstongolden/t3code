@@ -371,6 +371,21 @@ describe("index.html boot script", () => {
     expect(boot.metaContent).toBe(DEFAULT_DARK_CHROME);
   });
 
+  it("paints the You canvas before mount when nothing is selected", () => {
+    const light = runBootScript({ storage: {}, prefersDark: false });
+    expect(light.themeId).toBeUndefined();
+    expect(light.themeSelected).toBeUndefined();
+    expect(light.isDark).toBe(false);
+    expect(light.backgroundColor).toBe("#F8F8F6");
+    expect(light.metaContent).toBe("#F8F8F6");
+
+    const dark = runBootScript({ storage: {}, prefersDark: true });
+    expect(dark.themeId).toBeUndefined();
+    expect(dark.isDark).toBe(true);
+    expect(dark.backgroundColor).toBe("#131312");
+    expect(dark.metaContent).toBe("#131312");
+  });
+
   it("follows the OS appearance when storage is unavailable", () => {
     const light = runBootScript({ storageThrows: true, prefersDark: false });
     expect(light.isDark).toBe(false);

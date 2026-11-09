@@ -631,10 +631,72 @@ describe("context chip colors", () => {
     }
   });
 
+  it("uses the You warm palette for a fresh desktop default", () => {
+    expect(asHex(getStandardThemeColors("light").canvas)).toBe("#f8f8f6");
+    expect(asHex(getStandardThemeColors("light").text)).toBe("#31312f");
+    expect(asHex(getStandardThemeColors("light").messageAction)).toBe("#c63d24");
+    expect(asHex(getStandardThemeColors("dark").canvas)).toBe("#131312");
+    expect(asHex(getStandardThemeColors("dark").text)).toBe("#edede6");
+    expect(asHex(getStandardThemeColors("dark").messageAction)).toBe("#e5482f");
+    expect(asHex(getStandardThemeColors("light").accent)).not.toBe(
+      asHex(getDefaultThemeColors("light").accent),
+    );
+  });
+
+  it("keeps an explicit built-in or custom theme when one is selected", () => {
+    const properties = new Map<string, string>();
+    const dataset: { themeId?: string } = {};
+    const stored = new Map<string, string>([
+      [
+        CUSTOM_THEMES_STORAGE_KEY,
+        JSON.stringify([
+          {
+            id: "cobalt",
+            label: "Cobalt",
+            appearance: "light",
+            colors: { canvas: "#e8eef8", accent: "#1b4ed8", text: "#10243d" },
+          },
+        ]),
+      ],
+    ]);
+    vi.stubGlobal("window", {
+      localStorage: { getItem: (key: string) => stored.get(key) ?? null },
+    });
+    vi.stubGlobal("document", {
+      documentElement: {
+        dataset,
+        style: {
+          setProperty: (name: string, value: string) => properties.set(name, value),
+          removeProperty: (name: string) => properties.delete(name),
+        },
+      },
+    });
+    invalidateCustomThemes();
+    try {
+      applyThemePalette("t3-chat", "light");
+      expect(dataset.themeId).toBe("t3-chat");
+      expect(properties.get("--app-theme-accent")).toBe(T3_CHAT_THEME.colors.accent);
+      expect(asHex(properties.get("--app-theme-message-action")!)).not.toBe("#c63d24");
+
+      applyThemePalette("cobalt", "light");
+      expect(dataset.themeId).toBe("cobalt");
+      expect(asHex(properties.get("--app-theme-canvas")!)).toBe("#e8eef8");
+      expect(asHex(properties.get("--app-theme-accent")!)).toBe("#1b4ed8");
+
+      delete dataset.themeId;
+      applyThemePalette("system", "light");
+      expect(dataset.themeId).toBeUndefined();
+      expect(properties.has("--app-theme-accent")).toBe(false);
+    } finally {
+      vi.unstubAllGlobals();
+      invalidateCustomThemes();
+    }
+  });
+
   it("reads at 5:1 on the standard surfaces as index.css paints them", () => {
     const painted = {
-      light: ["#fcfcfc", "#ffffff", "#ebebed"],
-      dark: ["#000000", "#0a0a0a", "#111111", "#141414", "#1e1e1e"],
+      light: ["#f8f8f6", "#ffffff", "#fbfbf9", "#efefeb", "#f2f2ef"],
+      dark: ["#131312", "#181816", "#1f1f1c", "#0e0e0d"],
     } as const;
     const properties = new Map<string, string>();
     vi.stubGlobal("window", { localStorage: { getItem: () => null } });

@@ -1,3 +1,4 @@
+import { YouAlienMark } from "./you/YouMark";
 import { threadPullRequestLinkMode } from "@t3tools/client-runtime/thread-pull-request-compatibility";
 import { visibleThreadPullRequests } from "@t3tools/shared/threadPullRequests";
 
@@ -1581,6 +1582,17 @@ function OpenCommandPaletteDialog(props: {
     shortcutCommand: "usage.open",
     run: async () => {
       await navigate({ to: "/usage" });
+    },
+  });
+
+  actionItems.push({
+    kind: "action",
+    value: "action:you-memory",
+    searchTerms: ["you", "memory", "identity", "review", "context", "brief"],
+    title: "Open your memory",
+    icon: <YouAlienMark className={ITEM_ICON_CLASS} />,
+    run: async () => {
+      await navigate({ to: "/you" });
     },
   });
 

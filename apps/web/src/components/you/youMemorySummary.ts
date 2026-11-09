@@ -4,7 +4,6 @@
  * anything it does not recognise so a changed server cannot smuggle extra fields into UI.
  */
 export const YOU_MEMORY_SUMMARY_PATH = "/api/you-memory/summary";
-export const YOU_MEMORY_REVIEW_HASH = "you-memory";
 
 export interface YouMemorySummary {
   readonly identity: { readonly name: string | null; readonly username: string | null } | null;

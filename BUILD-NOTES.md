@@ -1,3 +1,17 @@
+# You build notes — in-app memory review (2026-11-09)
+
+The chat card and sidebar open `/you`, an owner session page over the current chat. It reads and
+writes `GET`/`POST /api/you-memory/review`, the same ledger, CSRF, and `reviewProposal` path as the
+HTML inspector. The page shows what is kept, where a note came from, which project it applies to,
+what is waiting, and which accepted notes are eligible for the next task. The HTML inspector stays
+available and authenticated. No second store.
+
+# You build notes — default desktop theme (2026-11-09)
+
+The warm You palette lived in `T3_CODE_*` (mobile, HTML export, and the contrast solver) while a fresh desktop web session paints `:root` with no `data-theme-id`. That unselected sheet was still T3 zinc with a blue primary. Named themes never saw it, because `html[data-theme-id]` replaces the sheet.
+
+The unselected light and dark sheets, the sidebar sheet, the boot splash, and the default theme card now use the same warm near-white / charcoal `#31312F` / vermilion palette. Light actions stay `#C63D24` so white labels keep 4.5:1. Dark actions use `#E5482F`. A stored built-in or custom theme still wins. Incomplete custom files still fill missing roles from T3 Chat, which is the existing file default and not the unselected page.
+
 # You build notes — M3 chat identity surface (2026-11-09, PST)
 
 Houston's feedback: the M2 inspector was minimal and below the live you.md aesthetic. M3 brings the

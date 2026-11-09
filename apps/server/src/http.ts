@@ -390,6 +390,7 @@ const UNTRACED_REQUEST_PATHS: ReadonlySet<string> = new Set([
   OTLP_TRACES_PROXY_PATH,
   "/api/you-memory",
   "/api/you-memory/summary",
+  "/api/you-memory/review",
 ]);
 
 // HttpRouter.serve builds routes privately; provide the server-wide TracerDisabledWhen to the served layer.
