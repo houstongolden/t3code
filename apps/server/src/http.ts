@@ -389,6 +389,7 @@ export const layerOtlpTracesProxyRoute = HttpRouter.add(
 const UNTRACED_REQUEST_PATHS: ReadonlySet<string> = new Set([
   OTLP_TRACES_PROXY_PATH,
   "/api/you-memory",
+  "/api/you-memory/summary",
 ]);
 
 // HttpRouter.serve builds routes privately; provide the server-wide TracerDisabledWhen to the served layer.

@@ -172,6 +172,12 @@ html[data-mobile-composer-route-transition="true"]::view-transition-old(t3-mobil
     -apple-system, BlinkMacSystemFont, "Inter Variable", "Segoe UI", system-ui, sans-serif;
   --font-mono:
     ui-monospace, "SF Mono", "SFMono-Regular", Menlo, Consolas, "Liberation Mono", monospace;
+  /* You display and label faces from the live you.md type system; scoped to You surfaces. */
+  --font-display: "Manrope Variable", var(--font-sans);
+  --font-label: "JetBrains Mono Variable", var(--font-mono);
+  /* Locked You mark colors; the mark keeps them in every theme. */
+  --color-you-vermilion: #e5482f;
+  --color-you-bone: #fff7f3;
 }
 
 @theme inline {
@@ -2568,4 +2574,27 @@ code {
 [data-workspace-area]:focus-visible {
   outline: 2px solid var(--ring);
   outline-offset: -2px;
+}
+
+/* You: the live you.md dotted field, faded toward the edges so it never competes with chat. */
+.you-dot-field-host::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  pointer-events: none;
+  background-image: radial-gradient(
+    color-mix(in srgb, var(--foreground) 10%, transparent) 0.6px,
+    transparent 0.9px
+  );
+  background-size: 14px 14px;
+  mask-image: radial-gradient(ellipse 55% 50% at 50% 45%, #000 10%, transparent 72%);
+}
+.you-dot-tile {
+  background-image: radial-gradient(
+    color-mix(in srgb, var(--primary) 22%, transparent) 0.7px,
+    transparent 1px
+  );
+  background-size: 4px 4px;
+  background-color: var(--background);
 }

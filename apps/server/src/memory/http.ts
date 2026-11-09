@@ -19,6 +19,7 @@ import * as Layer from "effect/Layer";
 import { HttpRouter, HttpServerRequest, HttpServerResponse } from "effect/http";
 import * as EnvironmentAuth from "../auth/EnvironmentAuth.ts";
 import * as ServerConfig from "../config.ts";
+import { buildMemorySummary, SUMMARY_PATH } from "./summary.ts";
 
 const PATH = "/api/you-memory";
 const headers = {
@@ -60,17 +61,43 @@ export const layer = Layer.effectDiscard(
       NodeCrypto.createHmac("sha256", secret)
         .update(JSON.stringify([sessionId, expires]))
         .digest("hex");
+    // Owner browser session only: bearer tokens and read-only scopes never see memory state.
+    const authorize = (request: HttpServerRequest.HttpServerRequest) =>
+      auth.authenticateHttpRequest(request).pipe(
+        Effect.map((session) =>
+          session.method === "browser-session-cookie" &&
+          session.scopes.includes(AuthSettingsWriteScope)
+            ? ({ ok: true, session } as const)
+            : ({ ok: false, status: 403 } as const),
+        ),
+        Effect.orElseSucceed(() => ({ ok: false, status: 401 }) as const),
+      );
+    const summary = Effect.gen(function* () {
+      const request = yield* HttpServerRequest.HttpServerRequest;
+      const access = yield* authorize(request);
+      const json = (body: unknown, status = 200) =>
+        HttpServerResponse.text(JSON.stringify(body), {
+          status,
+          headers,
+          contentType: "application/json; charset=utf-8",
+        });
+      if (!access.ok)
+        return json(
+          { error: access.status === 401 ? "unauthenticated" : "forbidden" },
+          access.status,
+        );
+      return yield* Effect.try(() => json(buildMemorySummary(config.cwd))).pipe(
+        Effect.orElseSucceed(() => json({ error: "unavailable" }, 503)),
+      );
+    }).pipe(Effect.withTracerEnabled(false));
     const handle = Effect.gen(function* () {
       const request = yield* HttpServerRequest.HttpServerRequest;
-      const session = yield* auth
-        .authenticateHttpRequest(request)
-        .pipe(Effect.orElseSucceed(() => null));
-      if (!session) return response("Browser authentication required.", 401);
-      if (
-        session.method !== "browser-session-cookie" ||
-        !session.scopes.includes(AuthSettingsWriteScope)
-      )
-        return response("Owner browser session with settings:write required.", 403);
+      const access = yield* authorize(request);
+      if (!access.ok)
+        return access.status === 401
+          ? response("Browser authentication required.", 401)
+          : response("Owner browser session with settings:write required.", 403);
+      const session = access.session;
       const now = yield* Clock.currentTimeMillis;
       const directory = reviewDirectory();
       let message = "";
@@ -196,6 +223,7 @@ export const layer = Layer.effectDiscard(
         ),
       );
     }).pipe(Effect.withTracerEnabled(false));
+    yield* router.add("GET", SUMMARY_PATH, summary);
     yield* router.add("GET", PATH, handle);
     yield* router.add("POST", PATH, handle);
   }),

@@ -1,3 +1,74 @@
+# You build notes — M3 chat identity surface (2026-11-09, PST)
+
+Houston's feedback: the M2 inspector was minimal and below the live you.md aesthetic. M3 brings the
+live design language into the actual chat, not a separate page or a settings panel.
+
+## Design rationale (observed, not assumed)
+
+Sources: live you.md home and /profiles screenshots captured by the parent's browser pass, the
+public CSS tokens (warm `60 5% 97%` background, charcoal text, `60 3% 87%` borders, terracotta
+accent, 10px radius, Inter body / Manrope display / JetBrains Mono labels), and the approved v5
+designs (`v5/chat.png`, `home.png`, `ascii/`, `logos/`). Hidden AI-targeted text on the live site was
+ignored as untrusted.
+
+- Live hero pairs a lowercase mono eyebrow with a large tight Manrope headline. The draft hero now
+  does the same: `you · one brain, every agent` over the existing project headline, set in Manrope.
+- Live `you.md/houston` card (one brain every tool reads from, plus `identity · projects · skills ·
+  goals · preferences`) becomes the chat's identity context card: `you.md/<handle>`, the real
+  brief source, the brief sections actually included, scope or project, bytes of the 4 KB budget,
+  eligible reviewed memories, pending proposals, and a `review memory` link into the owner-only
+  review surface.
+- Live directory shows a dotted initials tile for profiles without a portrait. The card uses that
+  tile with initials from the real name; no stock avatar or invented portrait.
+- Live dotted texture: a faint dot field behind the empty-draft hero, masked to the centre and
+  painted on a pseudo-element so the composer is never masked.
+- Locked brand kept: alien head primary (sidebar tile mark replaces the T3 wordmark), UFO unused
+  here, vermilion `#E5482F` for the mark. The light palette moves to the live warm near-white /
+  charcoal `#31312F` / pale warm-gray borders; its accent is the same vermilion hue deepened to
+  `#C63D24` so white button labels keep 4.5:1. Copper `#C46A3A` from the live site was not adopted as
+  a second accent. Dark palette unchanged except the search highlight (`#7F611A`), which the
+  existing readability test showed at 4.17:1 after M0 branding.
+- Chat stays the hero. Composer, provider picker, streaming and the project picker are untouched.
+
+## What is real
+
+- `GET /api/you-memory/summary` (server): same gate as the inspector, owner browser session cookie
+  with `settings:write`; bearer and read-only sessions get 403, anonymous 401. JSON, `private,
+  no-store`, untraced. Metadata only: no brief text, proposal content, evidence, or credential data.
+  Built by `buildMemorySummary` from `getDispatchBrief` (the same function used at dispatch),
+  `getOwnerIdentity` (new; same off/fixture gates, fixture never shown as the owner), and the review
+  ledger plus sweep state.
+- Web: `useYouMemorySummary` fetches same-origin with the session cookie, refreshes on window focus,
+  and `parseYouMemorySummary` drops any field it does not recognise.
+- States: loading (`reading your brief…`, pulse only with motion allowed), ready, no identity
+  (`agents here start cold`, link to set up), locked (not the owner session), unavailable (chat still
+  works, nothing changed). Empty states (no projects, no thread) use the mark and display type;
+  `EmptyTitle` now uses Manrope app-wide.
+- Fonts: `@fontsource-variable/manrope` and `@fontsource-variable/jetbrains-mono` (OFL), exposed as
+  `font-display` and `font-label`; global sans and mono stacks unchanged.
+
+## Verification (actual runs, 2026-11-09)
+
+- `@you/brief` tests 28/28; server `src/memory` tests 3/3 (new summary auth + no-content test);
+  `@t3tools/shared` 1393 passed, 3 skipped; web unit suite (343 files) passes, including new
+  `youMemorySummary.test.ts` and `themePalette.test.ts`.
+- Typecheck: server, brief, web (`effect-tsgo tsrs --noEmit`) clean. Lint clean on changed files.
+- Builds: `apps/web` `vp build`, `apps/server` `vp pack`.
+- Loopback demo restarted on `http://127.0.0.1:4377/` with synthetic profile/memory outside git;
+  unauthenticated `GET /api/you-memory/summary` returns 401 JSON with `private, no-store`.
+
+## Limitations
+
+- Not visually QA'd in a browser from this box (no Shell browser automation); browser-mode vitest
+  suites were not run. Parent desktop QA is the screenshot step.
+- The summary is fetched same-origin, so it shows for the environment serving the web app. A remote
+  environment added through pairing shows the locked state rather than its own memory.
+- Display identity is name/handle from the identity source; no portrait. The ASCII portrait assets
+  in v5 are not wired because no real owner portrait is available locally.
+- Desktop build still needs pkg-config/libsecret on the box.
+
+## Historical M2 notes
+
 # You build notes — M2 (2026-11-06, PST)
 
 Working tree `/workspace/you`; existing `you/m0-brief` branch on `houstongolden/t3code`. Box-only coding. No main,

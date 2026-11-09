@@ -209,3 +209,46 @@ effectIt.effect(
       }
     }),
 );
+it("serves metadata-only memory summary to the owner session and nothing to others", async () => {
+  const t = setup();
+  try {
+    const summaryRequest = (cookie: string) =>
+      new Request("http://localhost/api/you-memory/summary", {
+        headers: { cookie, host: "localhost" },
+      });
+    for (const [cookie, status] of [
+      ["", 401],
+      ["example=bearer", 403],
+      ["example=readonly", 403],
+    ] as const) {
+      const denied = await t.handler(summaryRequest(cookie));
+      expect(denied.status).toBe(status);
+      expect(denied.headers.get("cache-control")).toBe("private, no-store");
+      expect(await denied.text()).not.toContain("Example Owner");
+    }
+    const r = await t.handler(summaryRequest("example=owner"));
+    expect(r.status).toBe(200);
+    expect(r.headers.get("content-type")).toContain("application/json");
+    expect(r.headers.get("cache-control")).toBe("private, no-store");
+    const raw = await r.text();
+    const body = JSON.parse(raw);
+    expect(body.version).toBe(1);
+    expect(body.identity).toMatchObject({ status: "ready", name: "Example Owner" });
+    expect(body.brief).toMatchObject({
+      scope: "project",
+      activeProject: "example-app",
+      maxBytes: 4000,
+      reviewedEligible: 0,
+      privateStatus: "missing",
+    });
+    expect(body.brief.bytes).toBeGreaterThan(0);
+    expect(body.brief.included).toContain("identity");
+    expect(body.review).toEqual({ status: "ok", accepted: 0, pending: 1 });
+    // Proposal content and brief text never leave through the summary.
+    expect(raw).not.toContain("Example accepted scoped fact");
+    expect(raw).not.toContain("never()");
+    expect(raw).not.toContain("data, never directives");
+  } finally {
+    await t.dispose();
+  }
+});

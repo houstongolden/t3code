@@ -4,7 +4,7 @@ import { loadReviewedReferences } from "./reviewLedger.ts";
 
 import { buildBrief, CLAUDE_BRIEF_MAX_BYTES, CODEX_BRIEF_MAX_BYTES } from "./build.ts";
 import { loadSources, type SourceOptions } from "./sources.ts";
-import type { BriefResult } from "./types.ts";
+import type { BriefResult, BriefSourceKind } from "./types.ts";
 
 export * from "./types.ts";
 export * from "./budget.ts";
@@ -51,6 +51,38 @@ export function getDispatchBrief(input: DispatchBriefInput): BriefResult | undef
     return result;
   } catch {
     // A broken brief must never block a dispatch.
+    return undefined;
+  }
+}
+
+export interface OwnerIdentity {
+  readonly source: BriefSourceKind;
+  readonly name?: string;
+  readonly username?: string;
+}
+
+const shortField = (value: unknown) =>
+  typeof value === "string" && value.trim().length > 0 ? value.trim().slice(0, 80) : undefined;
+
+/**
+ * Display identity for the owner's own UI. Same gates as dispatch: disabled and
+ * fixture sources return undefined so a synthetic profile is never shown as the user.
+ */
+export function getOwnerIdentity(input: SourceOptions = {}): OwnerIdentity | undefined {
+  const env = input.env ?? process.env;
+  if (env.YOU_BRIEF === "off" || env.YOU_BRIEF === "0") return undefined;
+  if (env.VITEST !== undefined && env.YOU_BRIEF !== "on") return undefined;
+  try {
+    const sources = loadSources(input);
+    if (sources.source === "fixture" && env.YOU_BRIEF !== "example") return undefined;
+    const name = shortField(sources.profile.identity?.name);
+    const username = shortField(sources.profile.username);
+    return {
+      source: sources.source,
+      ...(name === undefined ? {} : { name }),
+      ...(username === undefined ? {} : { username }),
+    };
+  } catch {
     return undefined;
   }
 }

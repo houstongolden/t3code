@@ -11,6 +11,7 @@ import {
   CODEX_BRIEF_MAX_BYTES,
   detectActiveProject,
   getDispatchBrief,
+  getOwnerIdentity,
   listSkills,
   packSections,
   resolveProfile,
@@ -141,6 +142,18 @@ describe("sources", () => {
     });
     expect(r?.text).toContain("ship-it");
     expect(r?.text).not.toContain("SECRET BODY");
+  });
+
+  it("exposes only a bounded display identity and never the fixture as the owner", () => {
+    expect(getOwnerIdentity({ home: NodePath.join(home, "no-profile"), env: {} })).toBeUndefined();
+    NodeFS.mkdirSync(NodePath.join(home, ".you"), { recursive: true });
+    NodeFS.writeFileSync(NodePath.join(home, ".you", "you.json"), JSON.stringify(profile));
+    expect(getOwnerIdentity({ home, env: {} })).toEqual({
+      source: "local-you",
+      name: "Test Founder",
+      ...(profile.username ? { username: profile.username } : {}),
+    });
+    expect(getOwnerIdentity({ home, env: { YOU_BRIEF: "off" } })).toBeUndefined();
   });
 
   it("can be disabled", () => {

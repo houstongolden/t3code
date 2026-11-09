@@ -52,6 +52,9 @@ import { InlineButton } from "../ui/button";
 import { DraftProjectName } from "./DraftProjectName";
 import { DraftHeroProjectHeading } from "./DraftHeroProjectHeading";
 import { TriageDraftHero } from "./TriageDraftHero";
+import { YouIdentityContext } from "../you/YouIdentityContext";
+import { YouAlienMark } from "../you/YouMark";
+import { useYouMemorySummary } from "../you/useYouMemorySummary";
 import { resolveProjectSettings } from "@t3tools/shared/projectSettings";
 import { resolveProjectDefaultProviderModelSelection } from "../../providerInstances";
 import { resolveNewThreadModelSelection } from "@t3tools/shared/usageLimits";
@@ -100,6 +103,7 @@ export function DraftHeroHeadline({
   const pickerFilter = useComboboxFilter();
   const highlightedPickerValueRef = useRef<string | null>(null);
   const { canPinProjectGroup, toggleProjectGroupPin } = useProjectPin();
+  const youMemory = useYouMemorySummary();
 
   const environmentLabelById = new Map(
     environments.map((environment) => [environment.environmentId, environment.label] as const),
@@ -413,12 +417,16 @@ export function DraftHeroHeadline({
 
   return (
     <div className="mx-auto flex w-full max-w-5xl flex-col items-center">
+      <p className="mb-4 flex items-center gap-1.5 font-label text-2xs text-muted-foreground lowercase">
+        <YouAlienMark className="size-3.5 text-foreground" />
+        you · one brain, every agent
+      </p>
       {hasResolvedProject && !isScratchDraft ? (
         <DraftHeroProjectHeading projectName={activeProjectTitle ?? "Choose a project"}>
           {projectSelector}
         </DraftHeroProjectHeading>
       ) : (
-        <h1 className="w-full text-center font-normal text-2xl text-foreground tracking-tight sm:text-3xl">
+        <h1 className="w-full text-center font-display font-medium text-2xl text-foreground tracking-tight sm:text-4xl">
           {isScratchDraft ? (
             <>What should we work on?</>
           ) : canChooseProject ? (
@@ -433,6 +441,7 @@ export function DraftHeroHeadline({
           {isScratchDraft ? projectSelector : orStartWithoutProject}
         </p>
       )}
+      <YouIdentityContext state={youMemory} />
     </div>
   );
 }

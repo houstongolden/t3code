@@ -211,3 +211,10 @@ reported auth, freshness, exact project match, byte budget, eligible reviewed-re
 Tests use synthetic exports, subprocesses and auth-service fixtures. One end-to-end test imports → accepts through authenticated
 HTTP → exercises the actual Codex parameter builder → verifies untrusted bounded context and project isolation → undoes and
 verifies its removal. This is dispatch-construction verification, not a paid/live Codex call. Browser visual QA is still required.
+
+## Chat identity summary (M3)
+
+`GET /api/you-memory/summary` returns metadata for the chat identity card: identity name/handle and
+source, brief source/scope/active project/bytes/section names/eligible reviewed count/private status
+word, and accepted/pending review counts. Same owner-session gate as `/api/you-memory`. It never
+returns brief text, proposal content, evidence or credential data, and is `private, no-store`.

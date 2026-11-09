@@ -9,6 +9,7 @@ import { Button } from "./ui/button";
 import { Empty, EmptyDescription, EmptyHeader, EmptyTitle } from "./ui/empty";
 import { SidebarInset } from "./ui/sidebar";
 import { WorkspacePageHeader } from "./WorkspacePageHeader";
+import { YouAlienMark } from "./you/YouMark";
 
 export function NoProjectsHero() {
   const contentArea = workspaceAreaProps("home", 1, "Home");
@@ -28,6 +29,10 @@ export function NoProjectsHero() {
         <Empty size="hero" className="flex-1">
           <div className="w-full max-w-lg px-8 py-12">
             <EmptyHeader className="max-w-none">
+              <p className="mb-2 flex items-center justify-center gap-1.5 font-label text-2xs text-muted-foreground lowercase">
+                <YouAlienMark className="size-3.5 text-foreground" />
+                you · one brain, every agent
+              </p>
               <EmptyTitle>What should we work on?</EmptyTitle>
               <EmptyDescription>
                 {scratchTargetEnvironmentId === null
