@@ -15,13 +15,23 @@ import * as ByteSize from "effect/ByteSize";
 import * as DateTime from "effect/DateTime";
 import * as Clock from "effect/Clock";
 import * as Effect from "effect/Effect";
+import * as Option from "effect/Option";
+import * as Schema from "effect/Schema";
 import * as Layer from "effect/Layer";
 import { HttpRouter, HttpServerRequest, HttpServerResponse } from "effect/http";
 import * as EnvironmentAuth from "../auth/EnvironmentAuth.ts";
 import * as ServerConfig from "../config.ts";
 import { buildMemorySummary, SUMMARY_PATH } from "./summary.ts";
+import {
+  buildMemoryReview,
+  parseReviewDecision,
+  reviewFailure,
+  type MemoryReviewDocument,
+} from "./reviewView.ts";
 
+const decodeReviewJson = Schema.decodeOption(Schema.fromJsonString(Schema.Unknown));
 const PATH = "/api/you-memory";
+export const REVIEW_PATH = "/api/you-memory/review";
 const headers = {
   "cache-control": "private, no-store",
   "referrer-policy": "no-referrer",
@@ -223,7 +233,128 @@ export const layer = Layer.effectDiscard(
         ),
       );
     }).pipe(Effect.withTracerEnabled(false));
+    const reviewJson = (body: unknown, status = 200) =>
+      HttpServerResponse.text(JSON.stringify(body), {
+        status,
+        headers: {
+          "cache-control": "private, no-store",
+          "referrer-policy": "no-referrer",
+          "x-content-type-options": "nosniff",
+        },
+        contentType: "application/json; charset=utf-8",
+      });
+    const signedReview = (sessionId: string, now: number, document: MemoryReviewDocument) => {
+      const expires = String(now + 10 * 60_000);
+      return { ...document, csrf: `${expires}.${sign(sessionId, expires)}` };
+    };
+    const originAllowed = (request: HttpServerRequest.HttpServerRequest) => {
+      const origin = request.headers.origin;
+      const allowed = new Set<string>();
+      const host = request.headers.host;
+      if (host) {
+        allowed.add(`http://${host}`);
+        allowed.add(`https://${host}`);
+      }
+      if (config.devUrl) allowed.add(config.devUrl.origin);
+      return Boolean(
+        origin && allowed.has(origin) && request.headers["sec-fetch-site"] !== "cross-site",
+      );
+    };
+    const csrfValid = (sessionId: string, token: string, now: number) => {
+      const [expiry, signature, ...extra] = token.split(".");
+      const expected = sign(sessionId, expiry ?? "");
+      return (
+        extra.length === 0 &&
+        Boolean(expiry) &&
+        Boolean(signature) &&
+        Number(expiry) >= now &&
+        Number(expiry) <= now + 15 * 60_000 &&
+        /^\d+$/.test(expiry ?? "") &&
+        /^[a-f0-9]{64}$/.test(signature ?? "") &&
+        signature?.length === expected.length &&
+        NodeCrypto.timingSafeEqual(Buffer.from(expected), Buffer.from(signature ?? ""))
+      );
+    };
+    const review = Effect.gen(function* () {
+      const request = yield* HttpServerRequest.HttpServerRequest;
+      const access = yield* authorize(request);
+      if (!access.ok) {
+        return reviewJson(
+          { version: 1, error: access.status === 401 ? "unauthenticated" : "forbidden" },
+          access.status,
+        );
+      }
+      const now = yield* Clock.currentTimeMillis;
+      const directory = reviewDirectory();
+      const actor =
+        "browser-" +
+        NodeCrypto.createHash("sha256").update(access.session.subject).digest("hex").slice(0, 24);
+      if (request.method === "POST") {
+        if (!originAllowed(request))
+          return reviewJson(
+            { version: 1, error: "forbidden", message: "Cross-origin review rejected." },
+            403,
+          );
+        if (!request.headers["content-type"]?.includes("application/json"))
+          return reviewJson({ version: 1, error: "type", message: "JSON required." }, 415);
+        const raw = yield* request.text.pipe(
+          Effect.provideService(HttpServerRequest.MaxBodySize, ByteSize.bytes(32_000)),
+          Effect.orElseSucceed(() => null),
+        );
+        if (raw === null || Buffer.byteLength(raw) > 32_000)
+          return reviewJson(
+            { version: 1, error: "size", message: "That review is too large." },
+            413,
+          );
+        const decoded = decodeReviewJson(raw);
+        if (Option.isNone(decoded))
+          return reviewJson(
+            { version: 1, error: "invalid", message: "That review could not be read." },
+            400,
+          );
+        const parsed = decoded.value;
+        const record = parsed !== null && typeof parsed === "object" ? parsed : {};
+        const token = "csrf" in record && typeof record.csrf === "string" ? record.csrf : "";
+        if (!csrfValid(access.session.sessionId, token, now))
+          return reviewJson(
+            { version: 1, error: "forbidden", message: "Reload before reviewing." },
+            403,
+          );
+        const input = parseReviewDecision(parsed);
+        if (!input)
+          return reviewJson(
+            { version: 1, error: "invalid", message: "That decision is incomplete." },
+            400,
+          );
+        const saved = yield* Effect.sync(() => {
+          try {
+            reviewProposal(directory, input, actor);
+            return { ok: true as const };
+          } catch (error) {
+            return { ok: false as const, failure: reviewFailure(error) };
+          }
+        });
+        if (!saved.ok) {
+          return reviewJson(
+            { version: 1, error: saved.failure.code, message: saved.failure.message },
+            saved.failure.status,
+          );
+        }
+      }
+      return yield* Effect.try(() =>
+        reviewJson(signedReview(access.session.sessionId, now, buildMemoryReview(config.cwd))),
+      ).pipe(
+        Effect.orElseSucceed(() =>
+          reviewJson(
+            { version: 1, error: "unavailable", message: "Memory could not be read." },
+            503,
+          ),
+        ),
+      );
+    }).pipe(Effect.withTracerEnabled(false));
     yield* router.add("GET", SUMMARY_PATH, summary);
+    yield* router.add("GET", REVIEW_PATH, review);
+    yield* router.add("POST", REVIEW_PATH, review);
     yield* router.add("GET", PATH, handle);
     yield* router.add("POST", PATH, handle);
   }),

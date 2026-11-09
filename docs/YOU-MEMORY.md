@@ -218,3 +218,13 @@ verifies its removal. This is dispatch-construction verification, not a paid/liv
 source, brief source/scope/active project/bytes/section names/eligible reviewed count/private status
 word, and accepted/pending review counts. Same owner-session gate as `/api/you-memory`. It never
 returns brief text, proposal content, evidence or credential data, and is `private, no-store`.
+
+## In-app review
+
+`GET` and `POST /api/you-memory/review` are the owner session's review surface. They use the same
+browser-cookie `settings:write` gate, session CSRF, revision check, and `reviewProposal` writer as
+the HTML inspector. The JSON document includes identity name/handle/tagline, which chat the notes
+apply to, pending quotes, accepted notes eligible for the next task, and accepted notes kept for
+another project. It does not include the dispatch brief text, private CLI bodies, evidence hashes,
+or credentials. POST body is JSON, at most 32 KB, same-origin, with `reviewed: true`. Responses are
+`private, no-store` and untraced. The HTML inspector remains for the same ledger.

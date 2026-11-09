@@ -1,3 +1,11 @@
+# You build notes — in-app memory review (2026-11-09)
+
+The chat card and sidebar open `/you`, an owner session page over the current chat. It reads and
+writes `GET`/`POST /api/you-memory/review`, the same ledger, CSRF, and `reviewProposal` path as the
+HTML inspector. The page shows what is kept, where a note came from, which project it applies to,
+what is waiting, and which accepted notes are eligible for the next task. The HTML inspector stays
+available and authenticated. No second store.
+
 # You build notes — default desktop theme (2026-11-09)
 
 The warm You palette lived in `T3_CODE_*` (mobile, HTML export, and the contrast solver) while a fresh desktop web session paints `:root` with no `data-theme-id`. That unselected sheet was still T3 zinc with a blue primary. Named themes never saw it, because `html[data-theme-id]` replaces the sheet.

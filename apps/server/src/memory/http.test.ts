@@ -252,3 +252,170 @@ it("serves metadata-only memory summary to the owner session and nothing to othe
     await t.dispose();
   }
 });
+
+interface ReviewDoc {
+  csrf: string;
+  revision: string;
+  ready: Array<{ id: string; key: string; content: string }>;
+  elsewhere: Array<{ key: string }>;
+  pending: Array<{
+    id: string;
+    content: string;
+    scope: { kind: string; projectId: string | null };
+  }>;
+  undo: { eventId: string; scope: { kind: string; projectId: string | null } } | null;
+}
+
+it("reviews through the owner JSON API, keeps other projects out, then undoes", async () => {
+  const t = setup();
+  const dir = NodePath.dirname(t.state);
+  const writeProposal = (id: string, projectId: string, text: string) => {
+    const file = NodePath.join(dir, `${id}.jsonl`);
+    NodeFS.writeFileSync(
+      file,
+      `${JSON.stringify({
+        schema: "you-session/v1",
+        sessionId: "example-session",
+        id,
+        role: "user",
+        timestamp: "2026-11-06T21:00:00Z",
+        text,
+      })}\n`,
+    );
+    const manifest = NodePath.join(dir, `${id}-manifest.json`);
+    NodeFS.writeFileSync(
+      manifest,
+      JSON.stringify({
+        version: 1,
+        sources: [
+          {
+            id,
+            file,
+            provider: "codex",
+            format: "you-session-jsonl-v1",
+            scope: { kind: "project", projectId },
+          },
+        ],
+      }),
+    );
+    runSweep(manifest, t.state);
+  };
+  writeProposal("other-event", "other-client", "Example other project fact");
+  writeProposal("second-event", "example-app", "Example second fact");
+  const send = (method: string, body?: unknown, extra: Record<string, string> = {}) =>
+    t.handler(
+      new Request("http://localhost/api/you-memory/review", {
+        method,
+        headers: {
+          cookie: "example=owner",
+          host: "localhost",
+          accept: "application/json",
+          ...(body ? { "content-type": "application/json", origin: "http://localhost" } : {}),
+          ...extra,
+        },
+        ...(body ? { body: JSON.stringify(body) } : {}),
+      }),
+    );
+  try {
+    for (const [cookie, status] of [
+      ["", 401],
+      ["example=bearer", 403],
+      ["example=readonly", 403],
+    ] as const) {
+      const denied = await send("GET", undefined, { cookie });
+      expect(denied.status).toBe(status);
+      expect(denied.headers.get("cache-control")).toBe("private, no-store");
+      expect(await denied.text()).not.toContain("Example accepted scoped fact");
+    }
+    const read = async (response: Response) => (await response.json()) as ReviewDoc;
+    const initial = await send("GET");
+    expect(initial.status).toBe(200);
+    const first = await read(initial);
+    expect(first.ready).toEqual([]);
+    expect(first.pending.map((item) => item.content)).toEqual(
+      expect.arrayContaining([
+        "Example accepted scoped fact <script>never()</script>",
+        "Example other project fact",
+        "Example second fact",
+      ]),
+    );
+    const firstProposal = first.pending.find((item) => item.content.startsWith("Example accepted"));
+    const otherProposal = first.pending.find(
+      (item) => item.content === "Example other project fact",
+    );
+    const secondProposal = first.pending.find((item) => item.content === "Example second fact");
+    if (!firstProposal || !otherProposal || !secondProposal) throw new Error("missing proposal");
+    const accept = (doc: ReviewDoc, proposal: ReviewDoc["pending"][number], key: string) =>
+      send("POST", {
+        csrf: doc.csrf,
+        revision: doc.revision,
+        action: "accept",
+        scope: proposal.scope.kind,
+        projectId: proposal.scope.projectId ?? "",
+        proposalId: proposal.id,
+        key,
+        content: proposal.content,
+        target: "",
+        reviewed: true,
+      });
+    expect(
+      (
+        await send(
+          "POST",
+          { csrf: first.csrf, revision: first.revision, action: "accept", reviewed: true },
+          { origin: "https://attacker.example" },
+        )
+      ).status,
+    ).toBe(403);
+    const kept = await read(await accept(first, firstProposal, "shared-key"));
+    expect(kept.ready.map((item: { key: string }) => item.key)).toEqual(["shared-key"]);
+    const keptNote = kept.ready[0];
+    if (!keptNote) throw new Error("missing kept note");
+    expect(keptNote.content).toContain("Example accepted scoped fact");
+    const elsewhere = await read(await accept(kept, otherProposal, "other-key"));
+    expect(elsewhere.elsewhere.map((item: { key: string }) => item.key)).toEqual(["other-key"]);
+    expect(elsewhere.ready.map((item: { key: string }) => item.key)).toEqual(["shared-key"]);
+    const conflict = await accept(elsewhere, secondProposal, "shared-key");
+    expect(conflict.status).toBe(409);
+    expect(await conflict.json()).toMatchObject({ error: "conflict" });
+    const corrected = await read(
+      await send("POST", {
+        csrf: elsewhere.csrf,
+        revision: elsewhere.revision,
+        action: "correct",
+        scope: "project",
+        projectId: "example-app",
+        proposalId: secondProposal.id,
+        key: "shared-key",
+        content: "Example corrected fact",
+        target: elsewhere.ready[0]?.id ?? "",
+        reviewed: true,
+      }),
+    );
+    expect(corrected.ready).toEqual([
+      expect.objectContaining({ key: "shared-key", content: "Example corrected fact" }),
+    ]);
+    if (!corrected.undo) throw new Error("missing undo");
+    const undone = await read(
+      await send("POST", {
+        csrf: corrected.csrf,
+        revision: corrected.revision,
+        action: "undo",
+        scope: corrected.undo.scope.kind,
+        projectId: corrected.undo.scope.projectId ?? "",
+        target: corrected.undo.eventId,
+        proposalId: "",
+        key: "",
+        content: "",
+        reviewed: true,
+      }),
+    );
+    const restored = undone.ready[0];
+    if (!restored) throw new Error("missing restored note");
+    expect(restored.content).toContain("Example accepted scoped fact");
+    expect(restored.content).not.toContain("Example corrected fact");
+    expect(JSON.stringify(undone)).not.toContain("sha256");
+  } finally {
+    await t.dispose();
+  }
+});

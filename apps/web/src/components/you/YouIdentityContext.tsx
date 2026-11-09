@@ -7,7 +7,6 @@ import {
   describeMemoryFacts,
   identityInitials,
   sourceLabel,
-  YOU_MEMORY_REVIEW_HASH,
   type YouMemoryState,
   type YouMemorySummary,
 } from "./youMemorySummary";
@@ -15,8 +14,7 @@ import {
 function ReviewLink({ label }: { readonly label: string }) {
   return (
     <Link
-      to="/settings/about"
-      hash={YOU_MEMORY_REVIEW_HASH}
+      to="/you"
       className="pointer-events-auto inline-flex shrink-0 items-center gap-0.5 rounded-sm font-label text-2xs text-primary lowercase underline-offset-4 outline-hidden hover:underline focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-ring"
     >
       {label}

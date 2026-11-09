@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 
+import { YOU_MEMORY_UPDATED_EVENT } from "./youMemoryReview";
 import {
   parseYouMemorySummary,
   YOU_MEMORY_SUMMARY_PATH,
@@ -47,8 +48,10 @@ export function useYouMemorySummary(): YouMemoryState {
     };
     load();
     window.addEventListener("focus", load);
+    window.addEventListener(YOU_MEMORY_UPDATED_EVENT, load);
     return () => {
       window.removeEventListener("focus", load);
+      window.removeEventListener(YOU_MEMORY_UPDATED_EVENT, load);
       controller.abort();
     };
   }, []);

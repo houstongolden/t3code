@@ -2042,17 +2042,13 @@ export function AboutSettingsPanel() {
         <MobileAppSettingsRow />
       </SettingsSection>
 
-      <SettingsSection id="you-memory" title="You memory">
+      <SettingsSection id="you-memory" title="You">
         <p className="text-muted-foreground text-sm">
-          Owner-only local brief, sources and explicit memory review. No automatic acceptance.
+          Review notes this chat can carry into the next task. Nothing is kept until you accept it.
         </p>
-        <iframe
-          title="You memory review and brief sources"
-          src="/api/you-memory"
-          sandbox="allow-same-origin allow-forms"
-          className="h-[760px] w-full border-0"
-          referrerPolicy="no-referrer"
-        />
+        <Link to="/you" className="text-sm text-primary underline-offset-4 hover:underline">
+          Open your memory
+        </Link>
       </SettingsSection>
 
       <SettingsSection id="legal" title="Legal">

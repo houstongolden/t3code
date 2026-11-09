@@ -14,7 +14,7 @@ import {
 import { primaryServerKeybindingsAtom } from "../../state/server";
 import { cn } from "../../lib/utils";
 import { usePullRequestsSupported } from "../../state/environments";
-import { YouTileMark } from "../you/YouMark";
+import { YouAlienMark, YouTileMark } from "../you/YouMark";
 import {
   resolveEnvironmentIdentificationPillLabel,
   resolveSidebarStageBackdropVariant,
@@ -248,6 +248,13 @@ const SidebarUtilityMenu = memo(function SidebarUtilityMenu() {
     void navigate({ to: "/usage" });
   };
 
+  const handleYouClick = () => {
+    if (isMobile) {
+      setOpenMobile(false);
+    }
+    void navigate({ to: "/you" });
+  };
+
   const handleBackClick = () => {
     closeMobileSidebar();
     void navigateToMainApp();
@@ -264,6 +271,11 @@ const SidebarUtilityMenu = memo(function SidebarUtilityMenu() {
         </SidebarMenuItem>
       ) : (
         <>
+          <SidebarUtilityItem
+            icon={<YouAlienMark className="size-4" />}
+            label="You"
+            onClick={handleYouClick}
+          />
           <SidebarUtilityItem
             icon={<SettingsIcon />}
             label="Settings"
