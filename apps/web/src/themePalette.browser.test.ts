@@ -31,9 +31,12 @@ describe("standard painted theme colors", () => {
         const canvas = paintedChannels("--background");
         for (const [variable, role] of [
           ["--background", "canvas"],
+          ["--foreground", "text"],
           ["--card", "surface"],
           ["--surface-raised", "surfaceRaised"],
           ["--message-surface", "messageSurface"],
+          ["--primary", "messageAction"],
+          ["--ring", "focus"],
         ] as const) {
           const expected = toRgb(colors[role])!;
           const painted = paintedChannels(variable, canvas);
